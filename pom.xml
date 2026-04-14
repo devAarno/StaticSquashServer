@@ -76,6 +76,11 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>io.helidon.http.media</groupId>
+            <artifactId>helidon-http-media</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>${commons-compress.version}</version>
