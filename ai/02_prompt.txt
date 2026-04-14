@@ -1,0 +1,5 @@
+# Copyright (C) 2026 Parkhomenko Stanislav
+# This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+# To view a copy of this license, visit http://creativecommons.org
+
+Разработай структуру архива, на основе которого можно будет разработать тесты для проекта @ai/00_task.txt по плану @ai/arch_plan.md . Итоговый размер архива не должен превышать несколько килобайт, но должен быть удобен для разработки unit-тестов. Удели особое внимание краевым случаям и типовым ошибкам, связанных с обработкой древовидных структур. use context7
