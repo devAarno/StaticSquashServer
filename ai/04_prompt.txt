@@ -1,0 +1,5 @@
+# Copyright (C) 2026 Parkhomenko Stanislav
+# This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+# To view a copy of this license, visit http://creativecommons.org
+
+В тестах @src/test/java/ru/devaarno/staticsquashserver/archive/ArchiveParserTest.java часто используется проверка, что размер файла не нулевой. Замени эти проверки на проверку контрольных сумм CRC32. use context7
