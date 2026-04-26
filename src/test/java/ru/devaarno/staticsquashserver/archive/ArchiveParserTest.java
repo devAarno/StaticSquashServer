@@ -41,7 +41,8 @@ class ArchiveParserTest {
     private static final URI ZIP_FILE_URI = assertDoesNotThrow(
             () -> Objects.requireNonNull(
                     ArchiveParserTest.class.getResource("/test_archives/test.zip")
-            ).toURI()
+            ).toURI(),
+            "Test archive URI should be resolved without exceptions"
     );
     private static final long SPACES_TXT_CRC32 = 832580676L;
     private static final long LARGE_DUMMY_BIN_CRC32 = 2694514304L;
@@ -62,7 +63,7 @@ class ArchiveParserTest {
                 if (!entry.isDirectory()) {
                     fileCount++;
                     try (final InputStream is = zipFile.getInputStream(entry)) {
-                        assertNotNull(is);
+                        assertNotNull(is, "Input stream should not be null for: " + entry.getName());
                     }
                 }
             }
@@ -76,10 +77,10 @@ class ArchiveParserTest {
         try (final var zipFile = ZipFile.builder().setURI(ZIP_FILE_URI).get()) {
             final var entry = zipFile.getEntry("data/nested/deep/level3.json");
             assertNotNull(entry, "Deep nested file should exist");
-            assertFalse(entry.isDirectory());
+            assertFalse(entry.isDirectory(), "level3.json should not be a directory");
 
             try (final InputStream is = zipFile.getInputStream(entry)) {
-                assertNotNull(is);
+                assertNotNull(is, "Input stream should not be null for level3.json");
                 final byte[] content = is.readAllBytes();
                 final CRC32 crc32 = new CRC32();
                 crc32.update(content);
@@ -90,14 +91,14 @@ class ArchiveParserTest {
 
     @Test
     void testEmptyFile() throws IOException {
-        try (final var zipFile = ZipFile.builder().setURI(ZIP_FILE_URI).get()) {
+          try (final var zipFile = ZipFile.builder().setURI(ZIP_FILE_URI).get()) {
             final ZipArchiveEntry entry = zipFile.getEntry("empty_file.txt");
-            assertNotNull(entry);
-            assertEquals(0, entry.getSize());
+            assertNotNull(entry, "Empty file should exist");
+            assertEquals(0, entry.getSize(), "Empty file size should be 0");
 
             try (InputStream is = zipFile.getInputStream(entry)) {
                 byte[] content = is.readAllBytes();
-                assertEquals(0, content.length);
+                assertEquals(0, content.length, "Empty file content length should be 0");
             }
         }
     }
@@ -128,8 +129,8 @@ class ArchiveParserTest {
     @Test
     void testCaseSensitivity() throws IOException {
         try (final var zipFile = ZipFile.builder().setURI(ZIP_FILE_URI).get()) {
-            assertNotNull(zipFile.getEntry("UPPERCASE.HTML"));
-            assertNotNull(zipFile.getEntry("index.html"));
+            assertNotNull(zipFile.getEntry("UPPERCASE.HTML"), "UPPERCASE.HTML should exist");
+            assertNotNull(zipFile.getEntry("index.html"), "index.html should exist");
             assertNull(zipFile.getEntry("uppercase.html"),
                 "ZIP should be case-sensitive");
         }
@@ -137,23 +138,17 @@ class ArchiveParserTest {
 
     @Test
     void testLargeFileStreaming() throws IOException {
-        try (final var zipFile = ZipFile.builder().setURI(ZIP_FILE_URI).get()) {
+         try (final var zipFile = ZipFile.builder().setURI(ZIP_FILE_URI).get()) {
             final ZipArchiveEntry entry = zipFile.getEntry("data/large_dummy.bin");
-            assertNotNull(entry);
-            assertEquals(65536, entry.getSize());
+            assertNotNull(entry, "Large dummy file should exist");
+            assertEquals(65536, entry.getSize(), "Large dummy file size should be 65536");
 
             try (final InputStream is = zipFile.getInputStream(entry)) {
-                final byte[] buffer = new byte[1024];
-                int totalRead = 0;
-                int bytesRead;
+                final byte[] buffer = is.readAllBytes();
+                assertEquals(65536, buffer.length, "Large dummy file buffer length should be 65536");
+
                 final CRC32 crc32 = new CRC32();
-
-                while ((bytesRead = is.read(buffer)) != -1) {
-                    crc32.update(buffer, 0, bytesRead);
-                    totalRead += bytesRead;
-                }
-
-                assertEquals(65536, totalRead);
+                crc32.update(buffer, 0, buffer.length);
                 assertEquals(LARGE_DUMMY_BIN_CRC32, crc32.getValue(), CHECKSUM_MISMATCH);
             }
         }
@@ -167,7 +162,7 @@ class ArchiveParserTest {
             while (entries.hasMoreElements()) {
                 ZipArchiveEntry entry = entries.nextElement();
                 if (entry.getName().equals("css/")) {
-                    assertTrue(entry.isDirectory(), "css/ should be a directory");
+                    assertTrue(entry.isDirectory(), "css/ entry should be a directory");
                 }
             }
         }
@@ -176,8 +171,8 @@ class ArchiveParserTest {
     @Test
     void testAllureReportStructure() throws IOException {
         try (final var zipFile = ZipFile.builder().setURI(ZIP_FILE_URI).get()) {
-            assertNotNull(zipFile.getEntry("allure-report/index.html"));
-            assertNotNull(zipFile.getEntry("allure-report/widgets/summary.json"));
+            assertNotNull(zipFile.getEntry("allure-report/index.html"), "Allure index.html should exist");
+            assertNotNull(zipFile.getEntry("allure-report/widgets/summary.json"), "Allure summary.json should exist");
         }
     }
 }
