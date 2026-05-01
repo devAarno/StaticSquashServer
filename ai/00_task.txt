@@ -44,7 +44,8 @@
 Техническая документация (в порядке убывания приоритета):
 * (высокий приоритет) в Maven репозитории ~/.m2/repository/ доступны пакеты с исходными кодами зависимостей и их документация (`mvn dependency:sources dependency:resolve -Dclassifier=javadoc`);
 * use context7;
-* документация по Apache Common Compress --- https://commons.apache.org/proper/commons-compress/examples.html
+* документация по Apache Common Compress --- https://commons.apache.org/proper/commons-compress/examples.html;
+* тесты.
 
 Используй все доступные источники информации для выявления @Deprecated методов в сторонних библиотеках.
 
