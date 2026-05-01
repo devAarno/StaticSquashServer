@@ -24,6 +24,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <commons-compress.version>1.28.0</commons-compress.version>
+        <xz.version>1.12</xz.version>
         <jcommander.version>3.0</jcommander.version>
         <shade.version>3.6.2</shade.version>
         <native-maven-plugin.version>1.1.0</native-maven-plugin.version>
@@ -90,6 +91,13 @@
             <groupId>org.jcommander</groupId>
             <artifactId>jcommander</artifactId>
             <version>${jcommander.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <!-- XZ compression support -->
+        <dependency>
+            <groupId>org.tukaani</groupId>
+            <artifactId>xz</artifactId>
+            <version>${xz.version}</version>
             <scope>compile</scope>
         </dependency>
 

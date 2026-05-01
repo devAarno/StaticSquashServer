@@ -81,9 +81,8 @@ class ArchiveParserTest {
 
             try (final InputStream is = zipFile.getInputStream(entry)) {
                 assertNotNull(is, "Input stream should not be null for level3.json");
-                final byte[] content = is.readAllBytes();
                 final CRC32 crc32 = new CRC32();
-                crc32.update(content);
+                crc32.update(is.readAllBytes());
                 assertEquals(LEVEL3_JSON_CRC32, crc32.getValue(), CHECKSUM_MISMATCH);
             }
         }
@@ -97,8 +96,7 @@ class ArchiveParserTest {
             assertEquals(0, entry.getSize(), "Empty file size should be 0");
 
             try (InputStream is = zipFile.getInputStream(entry)) {
-                byte[] content = is.readAllBytes();
-                assertEquals(0, content.length, "Empty file content length should be 0");
+                assertEquals(0, is.readAllBytes().length, "Empty file content length should be 0");
             }
         }
     }
@@ -110,9 +108,8 @@ class ArchiveParserTest {
             assertNotNull(entry, "File with spaces should exist");
 
             try (final InputStream is = zipFile.getInputStream(entry)) {
-                final byte[] content = is.readAllBytes();
                 final CRC32 crc32 = new CRC32();
-                crc32.update(content);
+                crc32.update(is.readAllBytes());
                 assertEquals(SPACES_TXT_CRC32, crc32.getValue(), CHECKSUM_MISMATCH);
             }
         }
