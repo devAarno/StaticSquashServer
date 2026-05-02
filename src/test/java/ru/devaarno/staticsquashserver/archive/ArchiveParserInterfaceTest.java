@@ -26,6 +26,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.zip.CRC32;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,25 +37,26 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class ArchiveParserInterfaceTest {
 
-    private static final Path ZIP_ARCHIVE;
-    private static final Path TAR_GZ_ARCHIVE;
-    private static final Path TAR_XZ_ARCHIVE;
+    private static final Path ZIP_ARCHIVE = assertDoesNotThrow(
+            () -> Path.of(Objects.requireNonNull(
+                    ArchiveParserInterfaceTest.class.getResource("/test_archives/test.zip")
+            ).toURI()),
+            "Test TAR.XZ archive URI should be resolved without exceptions"
+    );
 
-    static {
-        try {
-            ZIP_ARCHIVE = Path.of(
-                    ArchiveParserInterfaceTest.class.getResource("/test_archives/test.zip").toURI()
-            );
-            TAR_GZ_ARCHIVE = Path.of(
-                    ArchiveParserInterfaceTest.class.getResource("/test_archives/test.tar.gz").toURI()
-            );
-            TAR_XZ_ARCHIVE = Path.of(
-                    ArchiveParserInterfaceTest.class.getResource("/test_archives/test.tar.xz").toURI()
-            );
-        } catch (java.net.URISyntaxException e) {
-            throw new RuntimeException("Failed to initialize test archive paths", e);
-        }
-    }
+    private static final Path TAR_GZ_ARCHIVE = assertDoesNotThrow(
+            () -> Path.of(Objects.requireNonNull(
+                    ArchiveParserInterfaceTest.class.getResource("/test_archives/test.tar.gz")
+            ).toURI()),
+            "Test TAR.XZ archive URI should be resolved without exceptions"
+    );
+
+    private static final Path TAR_XZ_ARCHIVE = assertDoesNotThrow(
+            () -> Path.of(Objects.requireNonNull(
+                    ArchiveParserInterfaceTest.class.getResource("/test_archives/test.tar.xz")
+            ).toURI()),
+            "Test TAR.XZ archive URI should be resolved without exceptions"
+    );
 
     private static final long SPACES_TXT_CRC32 = 832580676L;
     private static final long LARGE_DUMMY_BIN_CRC32 = 2694514304L;
@@ -81,7 +83,7 @@ class ArchiveParserInterfaceTest {
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testParseReturnsCorrectFileCount(ArchiveFormat format) throws Exception {
+    void testParseReturnsCorrectFileCount(ArchiveFormat format) {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
         ArchiveDescriptor descriptor = parser.parse(archive);
@@ -94,7 +96,7 @@ class ArchiveParserInterfaceTest {
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testParseContainsAllExpectedFiles(ArchiveFormat format) throws Exception {
+    void testParseContainsAllExpectedFiles(ArchiveFormat format) {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
         ArchiveDescriptor descriptor = parser.parse(archive);
@@ -123,7 +125,7 @@ class ArchiveParserInterfaceTest {
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testParseEntrySizes(ArchiveFormat format) throws Exception {
+    void testParseEntrySizes(ArchiveFormat format) {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
         ArchiveDescriptor descriptor = parser.parse(archive);
@@ -147,10 +149,9 @@ class ArchiveParserInterfaceTest {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
 
-        try (InputStream is = parser.getEntryInputStream(archive, "index.html")) {
+        try (final InputStream is = parser.getEntryInputStream(archive, "index.html")) {
             assertNotNull(is, "index.html stream should not be null");
-            byte[] content = is.readAllBytes();
-            assertTrue(content.length > 0, "index.html should have content");
+            assertTrue(is.readAllBytes().length > 0, "index.html should have content");
         }
     }
 
@@ -162,9 +163,8 @@ class ArchiveParserInterfaceTest {
 
         try (InputStream is = parser.getEntryInputStream(archive, "data/nested/deep/level3.json")) {
             assertNotNull(is, "level3.json stream should not be null");
-            byte[] content = is.readAllBytes();
             final CRC32 crc32 = new CRC32();
-            crc32.update(content);
+            crc32.update(is.readAllBytes());
             assertEquals(LEVEL3_JSON_CRC32, crc32.getValue(), CHECKSUM_MISMATCH);
         }
     }
@@ -177,9 +177,8 @@ class ArchiveParserInterfaceTest {
 
         try (InputStream is = parser.getEntryInputStream(archive, "file with spaces.txt")) {
             assertNotNull(is, "file with spaces.txt stream should not be null");
-            byte[] content = is.readAllBytes();
             final CRC32 crc32 = new CRC32();
-            crc32.update(content);
+            crc32.update(is.readAllBytes());
             assertEquals(SPACES_TXT_CRC32, crc32.getValue(), CHECKSUM_MISMATCH);
         }
     }
@@ -202,7 +201,7 @@ class ArchiveParserInterfaceTest {
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testGetEntryInputStreamNotFound(ArchiveFormat format) throws Exception {
+    void testGetEntryInputStreamNotFound(ArchiveFormat format) {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
 
@@ -212,7 +211,7 @@ class ArchiveParserInterfaceTest {
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testForEachEntry(ArchiveFormat format) throws Exception {
+    void testForEachEntry(ArchiveFormat format) {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
 
@@ -229,7 +228,7 @@ class ArchiveParserInterfaceTest {
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testForEachEntryCollectsAllFiles(ArchiveFormat format) throws Exception {
+    void testForEachEntryCollectsAllFiles(ArchiveFormat format) {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
 
@@ -245,7 +244,7 @@ class ArchiveParserInterfaceTest {
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testMediaTypeDetection(ArchiveFormat format) throws Exception {
+    void testMediaTypeDetection(ArchiveFormat format) {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
         ArchiveDescriptor descriptor = parser.parse(archive);
@@ -289,7 +288,7 @@ class ArchiveParserInterfaceTest {
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testAllureReportEntries(ArchiveFormat format) throws Exception {
+    void testAllureReportEntries(ArchiveFormat format) {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
         ArchiveDescriptor descriptor = parser.parse(archive);
