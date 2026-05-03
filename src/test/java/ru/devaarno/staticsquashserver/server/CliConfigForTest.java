@@ -17,32 +17,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.devaarno.staticsquashserver;
+package ru.devaarno.staticsquashserver.server;
 
 import ru.devaarno.staticsquashserver.cli.CliConfig;
-import ru.devaarno.staticsquashserver.server.ArchiveWebServer;
 
-public class Main {
-    public static void main(String[] args) {
+import java.nio.file.Path;
+
+final class CliConfigForTest {
+    
+    static CliConfig create(Path archivePath) {
         try {
-            CliConfig config = CliConfig.parse(args);
-            
-            ArchiveWebServer server = new ArchiveWebServer(config);
-            server.start();
-            
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                server.stop();
-                System.out.println("Server stopped");
-            }));
-            
-            server.awaitShutdown();
-            
-        } catch (IllegalArgumentException e) {
-            System.err.println("Configuration error: " + e.getMessage());
-            System.exit(1);
+            CliConfig config = CliConfig.parse(new String[]{"-a", archivePath.toString()});
+            return config;
         } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
-            System.exit(1);
+            throw new RuntimeException("Failed to create CliConfig", e);
         }
     }
 }
