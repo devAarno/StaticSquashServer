@@ -26,16 +26,23 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Objects;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.helidon.http.HeaderNames.CONTENT_LENGTH;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ArchiveWebServerIntegrationTest {
 
     private static ArchiveWebServer server;
     private static Http1Client client;
     private static int serverPort;
-    private static final Path TEST_ARCHIVE = Paths.get("src/test/resources/test_archives/test.zip");
+
+    private static final Path TEST_ARCHIVE = assertDoesNotThrow(
+            () -> Path.of(Objects.requireNonNull(
+                    ArchiveWebServerIntegrationTest.class.getResource("/test_archives/test.zip")
+            ).toURI()),
+            "Test TAR.XZ archive URI should be resolved without exceptions"
+    );
 
     @BeforeAll
     static void setUp() {
@@ -59,119 +66,121 @@ class ArchiveWebServerIntegrationTest {
     @Test
     void testHtmlFile() {
         try (Http1ClientResponse response = client.get("/index.html").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code());
             String entity = response.entity().as(String.class);
-            assertThat(entity).contains("<html>");
+            assertTrue(entity.contains("<html>"));
         }
     }
 
     @Test
     void testNestedJsonFile() {
         try (Http1ClientResponse response = client.get("/data/report.json").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code());
             String entity = response.entity().as(String.class);
-            assertThat(entity).contains("\"tests\"");
-            assertThat(entity).contains("\"passed\"");
+            assertAll(
+                    () -> assertTrue(entity.contains("\"tests\"")),
+                    () -> assertTrue(entity.contains("\"passed\""))
+            );
         }
     }
 
     @Test
     void testCssFile() {
         try (Http1ClientResponse response = client.get("/css/style.css").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code());
             String entity = response.entity().as(String.class);
-            assertThat(entity).contains("margin");
+            assertTrue(entity.contains("margin"));
         }
     }
 
     @Test
     void testNotFound() {
         try (Http1ClientResponse response = client.get("/nonexistent.txt").request()) {
-            assertThat(response.status().code()).isEqualTo(404);
+            assertEquals(404, response.status().code());
         }
     }
 
     @Test
     void testDeeplyNestedFile() {
         try (Http1ClientResponse response = client.get("/data/nested/deep/level3.json").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code());
             String entity = response.entity().as(String.class);
-            assertThat(entity).contains("\"level\"");
+            assertTrue(entity.contains("level"));
         }
     }
 
     @Test
     void testFileWithSpaces() {
         try (Http1ClientResponse response = client.get("/file with spaces.txt").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code());
         }
     }
 
     @Test
     void testHiddenFile() {
         try (Http1ClientResponse response = client.get("/.hidden_file").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code());
         }
     }
 
     @Test
     void testAllureReportIndex() {
         try (Http1ClientResponse response = client.get("/allure-report/index.html").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code());
             String entity = response.entity().as(String.class);
-            assertThat(entity).contains("<html>");
+            assertTrue(entity.contains("<html>"));
         }
     }
 
     @Test
     void testAllureWidgetJson() {
         try (Http1ClientResponse response = client.get("/allure-report/widgets/summary.json").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code());
             String entity = response.entity().as(String.class);
-            assertThat(entity).contains("{");
+            assertTrue(entity.contains("{"));
         }
     }
 
     @Test
     void testImageFile() {
         try (Http1ClientResponse response = client.get("/images/logo.png").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
-            assertThat(response.headers().first(io.helidon.http.HeaderNames.CONTENT_TYPE).orElse("")).isEqualTo("image/png");
+            assertEquals(200, response.status().code());
+            assertEquals("image/png", response.headers().first(io.helidon.http.HeaderNames.CONTENT_TYPE).orElse(""));
         }
     }
 
     @Test
     void testSvgFile() {
         try (Http1ClientResponse response = client.get("/images/icons/small.svg").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code());
             String entity = response.entity().as(String.class);
-            assertThat(entity).contains("<svg");
+            assertTrue(entity.contains("<svg"));
         }
     }
 
     @Test
     void testEmptyFile() {
         try (Http1ClientResponse response = client.get("/empty_file.txt").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
-            assertThat(response.headers().first(io.helidon.http.HeaderNames.CONTENT_LENGTH).orElse("0")).isEqualTo("0");
+            assertEquals(200, response.status().code());
+            assertEquals("0", response.headers().first(CONTENT_LENGTH).orElse("0"));
         }
     }
 
     @Test
     void testJavaScriptFile() {
         try (Http1ClientResponse response = client.get("/js/app.js").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code());
             String entity = response.entity().as(String.class);
-            assertThat(entity).contains("console");
+            assertTrue(entity.contains("console"));
         }
     }
 
     @Test
     void testNestedJavaScriptFile() {
         try (Http1ClientResponse response = client.get("/js/lib/vendor.js").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code());
             String entity = response.entity().as(String.class);
-            assertThat(entity).contains("Vendor");
+            assertTrue(entity.contains("Vendor"));
         }
     }
 }
