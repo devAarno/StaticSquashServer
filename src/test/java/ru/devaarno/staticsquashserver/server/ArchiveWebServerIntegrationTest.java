@@ -27,9 +27,11 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.zip.CRC32;
 
 import static io.helidon.http.HeaderNames.CONTENT_LENGTH;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ArchiveWebServerIntegrationTest {
 
@@ -43,6 +45,18 @@ class ArchiveWebServerIntegrationTest {
             ).toURI()),
             "Test TAR.XZ archive URI should be resolved without exceptions"
     );
+
+    private static final long INDEX_HTML_CRC32 = 3005742938L;
+    private static final long REPORT_JSON_CRC32 = 2840432823L;
+    private static final long STYLE_CSS_CRC32 = 791642431L;
+    private static final long LEVEL3_JSON_CRC32 = 4118783144L;
+    private static final long ALLURE_INDEX_HTML_CRC32 = 925851897L;
+    private static final long ALLURE_SUMMARY_JSON_CRC32 = 1374149304L;
+    private static final long LOGO_PNG_CRC32 = 3173656689L;
+    private static final long SMALL_SVG_CRC32 = 2192869760L;
+    private static final long APP_JS_CRC32 = 1244231727L;
+    private static final long VENDOR_JS_CRC32 = 3801644746L;
+    private static final String CRC32_MISMATCH = "CRC32 checksum mismatch";
 
     @BeforeAll
     static void setUp() {
@@ -67,8 +81,10 @@ class ArchiveWebServerIntegrationTest {
     void testHtmlFile() {
         try (Http1ClientResponse response = client.get("/index.html").request()) {
             assertEquals(200, response.status().code());
-            String entity = response.entity().as(String.class);
-            assertTrue(entity.contains("<html>"));
+            byte[] entity = response.entity().as(byte[].class);
+            final CRC32 crc32 = new CRC32();
+            crc32.update(entity);
+            assertEquals(INDEX_HTML_CRC32, crc32.getValue(), CRC32_MISMATCH);
         }
     }
 
@@ -76,11 +92,10 @@ class ArchiveWebServerIntegrationTest {
     void testNestedJsonFile() {
         try (Http1ClientResponse response = client.get("/data/report.json").request()) {
             assertEquals(200, response.status().code());
-            String entity = response.entity().as(String.class);
-            assertAll(
-                    () -> assertTrue(entity.contains("\"tests\"")),
-                    () -> assertTrue(entity.contains("\"passed\""))
-            );
+            byte[] entity = response.entity().as(byte[].class);
+            final CRC32 crc32 = new CRC32();
+            crc32.update(entity);
+            assertEquals(REPORT_JSON_CRC32, crc32.getValue(), CRC32_MISMATCH);
         }
     }
 
@@ -88,8 +103,10 @@ class ArchiveWebServerIntegrationTest {
     void testCssFile() {
         try (Http1ClientResponse response = client.get("/css/style.css").request()) {
             assertEquals(200, response.status().code());
-            String entity = response.entity().as(String.class);
-            assertTrue(entity.contains("margin"));
+            byte[] entity = response.entity().as(byte[].class);
+            final CRC32 crc32 = new CRC32();
+            crc32.update(entity);
+            assertEquals(STYLE_CSS_CRC32, crc32.getValue(), CRC32_MISMATCH);
         }
     }
 
@@ -104,8 +121,10 @@ class ArchiveWebServerIntegrationTest {
     void testDeeplyNestedFile() {
         try (Http1ClientResponse response = client.get("/data/nested/deep/level3.json").request()) {
             assertEquals(200, response.status().code());
-            String entity = response.entity().as(String.class);
-            assertTrue(entity.contains("level"));
+            byte[] entity = response.entity().as(byte[].class);
+            final CRC32 crc32 = new CRC32();
+            crc32.update(entity);
+            assertEquals(LEVEL3_JSON_CRC32, crc32.getValue(), CRC32_MISMATCH);
         }
     }
 
@@ -127,8 +146,10 @@ class ArchiveWebServerIntegrationTest {
     void testAllureReportIndex() {
         try (Http1ClientResponse response = client.get("/allure-report/index.html").request()) {
             assertEquals(200, response.status().code());
-            String entity = response.entity().as(String.class);
-            assertTrue(entity.contains("<html>"));
+            byte[] entity = response.entity().as(byte[].class);
+            final CRC32 crc32 = new CRC32();
+            crc32.update(entity);
+            assertEquals(ALLURE_INDEX_HTML_CRC32, crc32.getValue(), CRC32_MISMATCH);
         }
     }
 
@@ -136,8 +157,10 @@ class ArchiveWebServerIntegrationTest {
     void testAllureWidgetJson() {
         try (Http1ClientResponse response = client.get("/allure-report/widgets/summary.json").request()) {
             assertEquals(200, response.status().code());
-            String entity = response.entity().as(String.class);
-            assertTrue(entity.contains("{"));
+            byte[] entity = response.entity().as(byte[].class);
+            final CRC32 crc32 = new CRC32();
+            crc32.update(entity);
+            assertEquals(ALLURE_SUMMARY_JSON_CRC32, crc32.getValue(), CRC32_MISMATCH);
         }
     }
 
@@ -153,8 +176,10 @@ class ArchiveWebServerIntegrationTest {
     void testSvgFile() {
         try (Http1ClientResponse response = client.get("/images/icons/small.svg").request()) {
             assertEquals(200, response.status().code());
-            String entity = response.entity().as(String.class);
-            assertTrue(entity.contains("<svg"));
+            byte[] entity = response.entity().as(byte[].class);
+            final CRC32 crc32 = new CRC32();
+            crc32.update(entity);
+            assertEquals(SMALL_SVG_CRC32, crc32.getValue(), CRC32_MISMATCH);
         }
     }
 
@@ -170,8 +195,10 @@ class ArchiveWebServerIntegrationTest {
     void testJavaScriptFile() {
         try (Http1ClientResponse response = client.get("/js/app.js").request()) {
             assertEquals(200, response.status().code());
-            String entity = response.entity().as(String.class);
-            assertTrue(entity.contains("console"));
+            byte[] entity = response.entity().as(byte[].class);
+            final CRC32 crc32 = new CRC32();
+            crc32.update(entity);
+            assertEquals(APP_JS_CRC32, crc32.getValue(), CRC32_MISMATCH);
         }
     }
 
@@ -179,8 +206,10 @@ class ArchiveWebServerIntegrationTest {
     void testNestedJavaScriptFile() {
         try (Http1ClientResponse response = client.get("/js/lib/vendor.js").request()) {
             assertEquals(200, response.status().code());
-            String entity = response.entity().as(String.class);
-            assertTrue(entity.contains("Vendor"));
+            byte[] entity = response.entity().as(byte[].class);
+            final CRC32 crc32 = new CRC32();
+            crc32.update(entity);
+            assertEquals(VENDOR_JS_CRC32, crc32.getValue(), CRC32_MISMATCH);
         }
     }
 }

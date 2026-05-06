@@ -1,0 +1,5 @@
+# Copyright (C) 2026 Parkhomenko Stanislav
+# This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+# To view a copy of this license, visit http://creativecommons.org
+
+В тесте @src/test/java/ru/devaarno/staticsquashserver/server/ArchiveWebServerIntegrationTest.java используются слабые проверки, типа, `assertTrue(entity.contains("\"tests\""))`. Поскольку архив фиксирован, его содержимое известно и мы знаем, что там файлы небольшого размера, то допустимо получать всё содержимое (тело) ответа полностью и просто сверять с контрольной суммой, как это сделано, например, в @src/test/java/ru/devaarno/staticsquashserver/archive/ArchiveParserTest.java . Перепиши все слабые проверки (.contains(...)) на сравнение контрольных сумм CRC32. use context7
