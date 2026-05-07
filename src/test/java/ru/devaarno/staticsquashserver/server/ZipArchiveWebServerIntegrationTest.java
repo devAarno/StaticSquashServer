@@ -39,7 +39,7 @@ import static io.helidon.http.HeaderNames.CONTENT_TYPE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-class ArchiveWebServerIntegrationTest {
+class ZipArchiveWebServerIntegrationTest {
 
     private static ArchiveWebServer server;
     private static Http1Client client;
@@ -47,7 +47,7 @@ class ArchiveWebServerIntegrationTest {
 
     private static final Path TEST_ARCHIVE = assertDoesNotThrow(
             () -> Path.of(Objects.requireNonNull(
-                    ArchiveWebServerIntegrationTest.class.getResource("/test_archives/test.zip")
+                    ZipArchiveWebServerIntegrationTest.class.getResource("/test_archives/test.zip")
             ).toURI()),
             "Test archive URI should be resolved"
     );
