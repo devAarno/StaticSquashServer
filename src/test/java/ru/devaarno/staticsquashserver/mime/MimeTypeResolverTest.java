@@ -43,8 +43,9 @@ class MimeTypeResolverTest {
     
     @Test
     void testJavaScriptTypes() {
-        assertEquals(MediaTypes.APPLICATION_JAVASCRIPT, MimeTypeResolver.resolve("app.js"));
-        assertEquals(MediaTypes.APPLICATION_JAVASCRIPT, MimeTypeResolver.resolve("vendor.js"));
+        final var textJavascript = MediaTypes.create("text/javascript");
+        assertEquals(textJavascript, MimeTypeResolver.resolve("app.js"));
+        assertEquals(textJavascript, MimeTypeResolver.resolve("vendor.js"));
     }
     
     @Test

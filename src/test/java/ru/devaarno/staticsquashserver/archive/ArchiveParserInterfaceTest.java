@@ -265,7 +265,7 @@ class ArchiveParserInterfaceTest {
             .filter(e -> e.path().equals("js/app.js"))
             .findFirst()
             .orElseThrow();
-        assertEquals(io.helidon.common.media.type.MediaTypes.APPLICATION_JAVASCRIPT, jsEntry.mediaType());
+        assertEquals("text/javascript", jsEntry.mediaType().text());
 
         ArchiveEntryInfo jsonEntry = descriptor.entries().stream()
             .filter(e -> e.path().equals("data/report.json"))
