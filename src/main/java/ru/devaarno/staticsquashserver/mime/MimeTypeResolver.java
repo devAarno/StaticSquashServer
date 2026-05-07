@@ -34,7 +34,7 @@ public final class MimeTypeResolver {
         Map.entry("html", MediaTypes.TEXT_HTML),
         Map.entry("htm", MediaTypes.TEXT_HTML),
         Map.entry("css", MediaTypes.create("text/css")),
-        Map.entry("js", MediaTypes.APPLICATION_JAVASCRIPT),
+        Map.entry("js", MediaTypes.create("text/javascript")),
         Map.entry("json", MediaTypes.APPLICATION_JSON),
         Map.entry("png", MediaTypes.create("image/png")),
         Map.entry("jpg", MediaTypes.create("image/jpeg")),
