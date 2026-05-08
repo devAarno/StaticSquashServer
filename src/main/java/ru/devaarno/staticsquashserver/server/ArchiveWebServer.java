@@ -34,10 +34,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public final class ArchiveWebServer {
     private final WebServer server;
@@ -101,6 +97,9 @@ public final class ArchiveWebServer {
                 Thread.currentThread().interrupt();
                 resp.status(Status.INTERNAL_SERVER_ERROR_500);
                 resp.send("Request interrupted");
+            } catch (IOException e) {
+                resp.status(Status.INTERNAL_SERVER_ERROR_500);
+                resp.send("Error: " + e.getMessage());
             }
         };
     }
@@ -135,92 +134,5 @@ public final class ArchiveWebServer {
 
     public ArchiveDescriptor archiveDescriptor() {
         return archiveDescriptor;
-    }
-
-    private static final class RequestQueue {
-        private final ConcurrentHashMap<String, EntryRequest> pendingRequests = new ConcurrentHashMap<>();
-        private final ArchiveParser archiveParser;
-        private final Path archivePath;
-        private final ExecutorService executor;
-        private volatile boolean shutdown = false;
-
-        RequestQueue(ArchiveParser archiveParser, Path archivePath) {
-            this.archiveParser = archiveParser;
-            this.archivePath = archivePath;
-            this.executor = Executors.newVirtualThreadPerTaskExecutor();
-        }
-
-        InputStream getEntryStream(String entryPath) throws InterruptedException, IOException {
-            if (shutdown) {
-                throw new IOException("Request queue is shut down");
-            }
-
-            EntryRequest request = pendingRequests.computeIfAbsent(entryPath, path -> {
-                EntryRequest req = new EntryRequest(path);
-                executor.execute(() -> processRequest(req));
-                return req;
-            });
-
-            request.latch().await();
-            
-            InputStream stream = request.result();
-            if (stream == null) {
-                throw new IOException("Entry not found: " + entryPath);
-            }
-            return stream;
-        }
-
-        private void processRequest(EntryRequest request) {
-            try {
-                InputStream stream = archiveParser.getEntryInputStream(archivePath, request.entryPath());
-                request.setResult(stream);
-            } catch (RuntimeException e) {
-                request.setResult(null);
-            } finally {
-                request.latch().countDown();
-                pendingRequests.remove(request.entryPath());
-            }
-        }
-
-        void shutdown() {
-            shutdown = true;
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                executor.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        private static final class EntryRequest {
-            private final String entryPath;
-            private final java.util.concurrent.CountDownLatch latch;
-            private volatile InputStream result;
-
-            EntryRequest(String entryPath) {
-                this.entryPath = entryPath;
-                this.latch = new java.util.concurrent.CountDownLatch(1);
-                this.result = null;
-            }
-
-            String entryPath() {
-                return entryPath;
-            }
-
-            java.util.concurrent.CountDownLatch latch() {
-                return latch;
-            }
-
-            InputStream result() {
-                return result;
-            }
-
-            void setResult(InputStream result) {
-                this.result = result;
-            }
-        }
     }
 }
