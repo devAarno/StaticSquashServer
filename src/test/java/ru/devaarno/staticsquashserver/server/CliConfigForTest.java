@@ -33,4 +33,18 @@ final class CliConfigForTest {
             throw new RuntimeException("Failed to create CliConfig", e);
         }
     }
+    
+    CliConfigForTest(int port, String archivePath) {
+        try {
+            this.config = CliConfig.parse(new String[]{"-p", String.valueOf(port), "-a", archivePath});
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create CliConfig", e);
+        }
+    }
+    
+    private final CliConfig config;
+    
+    CliConfig getConfig() {
+        return config;
+    }
 }
