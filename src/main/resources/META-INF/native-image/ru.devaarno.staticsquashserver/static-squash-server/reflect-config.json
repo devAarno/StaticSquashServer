@@ -1,0 +1,14 @@
+[
+  {
+    "name": "ru.devaarno.staticsquashserver.cli.CliConfig",
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.beust.jcommander.Parameter",
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  }
+]

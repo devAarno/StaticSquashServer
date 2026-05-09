@@ -1,0 +1,6 @@
+[
+  ["org.apache.commons.compress.archivers.ArchiveInputStream"],
+  ["org.apache.commons.compress.compressors.CompressorInputStream"],
+  ["org.apache.commons.compress.archivers.ArchiveOutputStream"],
+  ["org.apache.commons.compress.compressors.CompressorOutputStream"]
+]

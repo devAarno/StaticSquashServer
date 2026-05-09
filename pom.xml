@@ -165,15 +165,15 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
+           <plugin>
                 <groupId>org.graalvm.buildtools</groupId>
                 <artifactId>native-maven-plugin</artifactId>
                 <version>${native-maven-plugin.version}</version>
                 <extensions>true</extensions>
                 <configuration>
                     <buildArgs>
-                        <buildArg>--allow-incomplete-classpath</buildArg>
-                        <buildArg>--report-unsupported-elements-at-runtime</buildArg>
+                        <buildArg>--enable-url-protocols=http</buildArg>
+                        <buildArg>--initialize-at-build-time=ru.devaarno.staticsquashserver</buildArg>
                     </buildArgs>
                 </configuration>
             </plugin>
