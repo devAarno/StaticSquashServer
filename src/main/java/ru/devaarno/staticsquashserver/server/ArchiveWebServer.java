@@ -29,6 +29,7 @@ import ru.devaarno.staticsquashserver.archive.ArchiveEntryInfo;
 import ru.devaarno.staticsquashserver.archive.ArchiveParser;
 import ru.devaarno.staticsquashserver.archive.ArchiveParserFactory;
 import ru.devaarno.staticsquashserver.cli.CliConfig;
+import ru.devaarno.staticsquashserver.logging.SimpleLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +50,7 @@ public final class ArchiveWebServer {
             throw new IllegalArgumentException("Archive file not found: " + archivePath);
         }
         
+        SimpleLogger.info("Parsing archive: " + archivePath);
         this.archiveParser = ArchiveParserFactory.create(archivePath);
         this.archiveDescriptor = archiveParser.parse(archivePath);
         
@@ -56,6 +58,7 @@ public final class ArchiveWebServer {
             throw new IllegalStateException("Archive contains no files");
         }
         
+        SimpleLogger.info("Archive parsed successfully: " + archiveDescriptor.entries().size() + " files found");
         this.requestQueue = new RequestQueue(archiveParser, archivePath);
         
         this.server = WebServer.builder()
@@ -110,7 +113,7 @@ public final class ArchiveWebServer {
 
     public void start() {
         server.start();
-        System.out.println("Server started on port " + server.port());
+        SimpleLogger.info("Server started on port " + server.port());
     }
 
     public void awaitShutdown() {
@@ -124,8 +127,10 @@ public final class ArchiveWebServer {
     }
 
     public void stop() {
+        SimpleLogger.info("Stopping server...");
         server.stop();
         requestQueue.shutdown();
+        SimpleLogger.info("Server stopped");
     }
 
     public int port() {
