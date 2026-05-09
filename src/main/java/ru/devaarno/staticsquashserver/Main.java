@@ -20,6 +20,7 @@
 package ru.devaarno.staticsquashserver;
 
 import ru.devaarno.staticsquashserver.cli.CliConfig;
+import ru.devaarno.staticsquashserver.logging.SimpleLogger;
 import ru.devaarno.staticsquashserver.server.ArchiveWebServer;
 
 public class Main {
@@ -32,16 +33,15 @@ public class Main {
             
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 server.stop();
-                System.out.println("Server stopped");
             }));
             
             server.awaitShutdown();
             
         } catch (IllegalArgumentException e) {
-            System.err.println("Configuration error: " + e.getMessage());
+            SimpleLogger.error("Configuration error: " + e.getMessage());
             System.exit(1);
         } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
+            SimpleLogger.error("Application error: " + e.getMessage(), e);
             System.exit(1);
         }
     }
