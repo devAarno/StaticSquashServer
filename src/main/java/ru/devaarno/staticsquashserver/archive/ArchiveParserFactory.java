@@ -26,8 +26,7 @@ import java.nio.file.Path;
  */
 public final class ArchiveParserFactory {
     
-    private ArchiveParserFactory() {
-    }
+    private ArchiveParserFactory() { }
     
     /**
      * Creates an appropriate parser for the given archive path.
@@ -36,7 +35,7 @@ public final class ArchiveParserFactory {
      * @return an ArchiveParser instance for the detected format
      * @throws IllegalArgumentException if archive format is not supported
      */
-    public static ArchiveParser create(Path archivePath) {
+    public static ArchiveParser create(final Path archivePath) {
         String name = archivePath.getFileName().toString().toLowerCase();
         
         if (name.endsWith(".zip")) {

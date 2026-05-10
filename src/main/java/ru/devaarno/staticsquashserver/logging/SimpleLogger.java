@@ -30,24 +30,24 @@ public final class SimpleLogger {
         // Utility class
     }
     
-    public static void info(String message) {
+    public static void info(final String message) {
         System.out.println(PREFIX + " INFO: " + message);
     }
     
-    public static void warn(String message) {
+    public static void warn(final String message) {
         System.err.println(PREFIX + " WARN: " + message);
     }
     
-    public static void warn(String message, Throwable t) {
+    public static void warn(final String message, final Throwable t) {
         System.err.println(PREFIX + " WARN: " + message);
         t.printStackTrace(System.err);
     }
     
-    public static void error(String message) {
+    public static void error(final String message) {
         System.err.println(PREFIX + " ERROR: " + message);
     }
     
-    public static void error(String message, Throwable t) {
+    public static void error(final String message, final Throwable t) {
         System.err.println(PREFIX + " ERROR: " + message);
         t.printStackTrace(System.err);
     }

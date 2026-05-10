@@ -53,13 +53,13 @@ public final class MimeTypeResolver {
     private MimeTypeResolver() {
     }
     
-    public static MediaType resolve(String fileName) {
-        int lastDot = fileName.lastIndexOf('.');
+    public static MediaType resolve(final String fileName) {
+        final var lastDot = fileName.lastIndexOf('.');
         if (lastDot < 0 || lastDot == fileName.length() - 1) {
             return MediaTypes.APPLICATION_OCTET_STREAM;
         }
         
-        String ext = fileName.substring(lastDot + 1).toLowerCase();
+        final var ext = fileName.substring(lastDot + 1).toLowerCase();
         return EXTENSION_TO_TYPE.getOrDefault(ext, MediaTypes.APPLICATION_OCTET_STREAM);
     }
 }

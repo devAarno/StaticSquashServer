@@ -24,6 +24,8 @@ import io.helidon.http.Status;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.Handler;
 import io.helidon.webserver.http.HttpRouting;
+import io.helidon.webserver.http.ServerRequest;
+import io.helidon.webserver.http.ServerResponse;
 import ru.devaarno.staticsquashserver.archive.ArchiveDescriptor;
 import ru.devaarno.staticsquashserver.archive.ArchiveEntryInfo;
 import ru.devaarno.staticsquashserver.archive.ArchiveParser;
@@ -33,6 +35,7 @@ import ru.devaarno.staticsquashserver.logging.SimpleLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -43,7 +46,7 @@ public final class ArchiveWebServer {
     private final Path archivePath;
     private final RequestQueue requestQueue;
 
-    public ArchiveWebServer(CliConfig config) {
+    public ArchiveWebServer(final CliConfig config) {
         this.archivePath = Path.of(config.getArchivePath());
         
         if (!Files.exists(archivePath)) {
@@ -61,30 +64,31 @@ public final class ArchiveWebServer {
         SimpleLogger.info("Archive parsed successfully: " + archiveDescriptor.entries().size() + " files found");
         this.requestQueue = new RequestQueue(archiveParser, archivePath);
         
-        this.server = WebServer.builder()
+        this.server = WebServer
+                .builder()
                 .port(config.getPort())
                 .routing(this::setupRouting)
                 .build();
     }
 
-    private void setupRouting(HttpRouting.Builder routing) {
-        for (ArchiveEntryInfo entry : archiveDescriptor.entries()) {
+    private void setupRouting(final HttpRouting.Builder routing) {
+        for (final ArchiveEntryInfo entry : archiveDescriptor.entries()) {
             String path = "/" + normalizePath(entry.path());
             routing.get(path, createHandler(entry));
         }
         
-        routing.any((req, resp) -> {
+        routing.any((final ServerRequest _, final ServerResponse resp) -> {
             resp.status(Status.NOT_FOUND_404);
             resp.send("Not found");
         });
     }
 
     private Handler createHandler(ArchiveEntryInfo entryInfo) {
-        return (req, resp) -> {
+        return (final ServerRequest _, final ServerResponse resp) -> {
             try {
                 InputStream entryStream = requestQueue.getEntryStream(entryInfo.path());
                 
-                if (entryStream == null) {
+                if (entryStream == null) { // Check it
                     resp.status(Status.NOT_FOUND_404);
                     resp.send("File not found in archive");
                     return;
@@ -92,22 +96,25 @@ public final class ArchiveWebServer {
                 
                 resp.headers().contentLength(entryInfo.size());
                 resp.headers().set(HeaderNames.CONTENT_TYPE, entryInfo.mediaType().text());
-                try (InputStream is = entryStream) {
-                    resp.outputStream().write(is.readAllBytes());
+                try (
+                        final var inputStream = entryStream;
+                        final var outputStream = resp.outputStream()
+                ) {
+                    inputStream.transferTo(outputStream);
                 }
                 
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
                 resp.status(Status.INTERNAL_SERVER_ERROR_500);
                 resp.send("Request interrupted");
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 resp.status(Status.INTERNAL_SERVER_ERROR_500);
                 resp.send("Error: " + e.getMessage());
             }
         };
     }
 
-    private String normalizePath(String path) {
+    private String normalizePath(final String path) {
         return path.replace('\\', '/');
     }
 

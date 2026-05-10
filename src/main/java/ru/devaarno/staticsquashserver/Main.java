@@ -23,24 +23,23 @@ import ru.devaarno.staticsquashserver.cli.CliConfig;
 import ru.devaarno.staticsquashserver.logging.SimpleLogger;
 import ru.devaarno.staticsquashserver.server.ArchiveWebServer;
 
-public class Main {
-    public static void main(String[] args) {
+public final class Main {
+    static void main(final String[] args) {
         try {
-            CliConfig config = CliConfig.parse(args);
             
-            ArchiveWebServer server = new ArchiveWebServer(config);
+            ArchiveWebServer server = new ArchiveWebServer(
+                    CliConfig.parse(args)
+            );
             server.start();
             
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                server.stop();
-            }));
+            Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
             
             server.awaitShutdown();
             
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             SimpleLogger.error("Configuration error: " + e.getMessage());
             System.exit(1);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             SimpleLogger.error("Application error: " + e.getMessage(), e);
             System.exit(1);
         }

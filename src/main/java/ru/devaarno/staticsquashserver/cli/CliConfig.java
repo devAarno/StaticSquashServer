@@ -44,12 +44,12 @@ public final class CliConfig {
         return archivePath;
     }
 
-    public void validate() {
+    private void validate() {
         if (archivePath == null || archivePath.isEmpty()) {
             throw new ParameterException("Archive path is required. Use --archive or -a");
         }
 
-        Path path = Path.of(archivePath);
+        final var path = Path.of(archivePath);
         if (!Files.exists(path)) {
             throw new ParameterException("Archive file does not exist: " + archivePath);
         }
@@ -63,9 +63,10 @@ public final class CliConfig {
         }
     }
 
-    public static CliConfig parse(String[] args) {
-        CliConfig config = new CliConfig();
-        JCommander jc = JCommander.newBuilder()
+    public static CliConfig parse(final String[] args) {
+        final var config = new CliConfig();
+        final var jc = JCommander
+                .newBuilder()
                 .addObject(config)
                 .build();
         jc.parse(args);

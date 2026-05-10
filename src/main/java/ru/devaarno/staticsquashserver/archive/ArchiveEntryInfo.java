@@ -23,32 +23,9 @@ import io.helidon.common.media.type.MediaType;
 
 import java.time.Instant;
 
-public final class ArchiveEntryInfo {
-    private final String path;
-    private final long size;
-    private final MediaType mediaType;
-    private final Instant modificationTime;
-
-    public ArchiveEntryInfo(String path, long size, MediaType mediaType, Instant modificationTime) {
-        this.path = path;
-        this.size = size;
-        this.mediaType = mediaType;
-        this.modificationTime = modificationTime;
-    }
-
-    public String path() {
-        return path;
-    }
-
-    public long size() {
-        return size;
-    }
-
-    public MediaType mediaType() {
-        return mediaType;
-    }
-
-    public Instant modificationTime() {
-        return modificationTime;
-    }
-}
+public record ArchiveEntryInfo(
+        String path,
+        long size,
+        MediaType mediaType,
+        Instant modificationTime
+) { }

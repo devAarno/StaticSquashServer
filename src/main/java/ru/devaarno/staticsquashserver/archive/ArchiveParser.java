@@ -19,8 +19,12 @@
 
 package ru.devaarno.staticsquashserver.archive;
 
+import io.helidon.common.media.type.MediaType;
+import ru.devaarno.staticsquashserver.mime.MimeTypeResolver;
+
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
 /**
  * Interface for parsing archive files and extracting entry streams.
@@ -45,7 +49,7 @@ public interface ArchiveParser {
      * @return input stream for the entry, or null if entry not found
      * @throws RuntimeException if archive is corrupted or cannot be read
      */
-    InputStream getEntryInputStream(Path archivePath, String entryPath);
+    InputStream getEntryInputStream(final Path archivePath, final String entryPath);
     
     /**
      * Returns the format this parser handles.
@@ -60,8 +64,8 @@ public interface ArchiveParser {
      * @param entryName the name of the entry
      * @return the detected media type
      */
-    static io.helidon.common.media.type.MediaType detectMediaType(String entryName) {
-        return ru.devaarno.staticsquashserver.mime.MimeTypeResolver.resolve(entryName);
+    static MediaType detectMediaType(final String entryName) {
+        return MimeTypeResolver.resolve(entryName);
     }
     
     /**
@@ -71,5 +75,5 @@ public interface ArchiveParser {
      * @param entryConsumer consumer that processes each entry
      * @throws RuntimeException if archive is corrupted
      */
-    void forEachEntry(Path archivePath, java.util.function.Consumer<ArchiveEntryInfo> entryConsumer);
+    void forEachEntry(final Path archivePath, final Consumer<ArchiveEntryInfo> entryConsumer);
 }
