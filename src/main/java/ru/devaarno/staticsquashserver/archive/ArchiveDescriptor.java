@@ -22,26 +22,8 @@ package ru.devaarno.staticsquashserver.archive;
 import java.nio.file.Path;
 import java.util.List;
 
-public final class ArchiveDescriptor {
-    private final Path archivePath;
-    private final ArchiveFormat format;
-    private final List<ArchiveEntryInfo> entries;
-
-    public ArchiveDescriptor(Path archivePath, ArchiveFormat format, List<ArchiveEntryInfo> entries) {
-        this.archivePath = archivePath;
-        this.format = format;
-        this.entries = entries;
-    }
-
-    public Path archivePath() {
-        return archivePath;
-    }
-
-    public ArchiveFormat format() {
-        return format;
-    }
-
-    public List<ArchiveEntryInfo> entries() {
-        return entries;
-    }
-}
+public record ArchiveDescriptor(
+        Path archivePath,
+        ArchiveFormat format,
+        List<ArchiveEntryInfo> entries
+) { }
