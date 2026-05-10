@@ -22,7 +22,7 @@ package ru.devaarno.staticsquashserver.mime;
 import io.helidon.common.media.type.MediaTypes;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for MIME type resolution.

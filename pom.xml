@@ -37,7 +37,7 @@
 
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
-        <allure-maven-plugin.version>2.17.0</allure-maven-plugin.version>
+        <allure-maven-plugin.version>3.0.1</allure-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
     </properties>
 
@@ -91,7 +91,6 @@
         <dependency>
             <groupId>io.helidon.webserver.testing.junit5</groupId>
             <artifactId>helidon-webserver-testing-junit5</artifactId>
-            <version>4.4.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
