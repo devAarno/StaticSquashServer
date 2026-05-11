@@ -178,7 +178,30 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>${mainClass}</mainClass>
                                 </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/helidon/config-metadata.json</resource>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/helidon/manifest</resource>
+                                </transformer>
                             </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/LICENSE*</exclude>
+                                        <exclude>META-INF/NOTICE*</exclude>
+                                        <exclude>META-INF/DEPENDENCIES</exclude>
+                                        <exclude>**/module-info.class</exclude>
+                                        <exclude>META-INF/versions/9/module-info.class</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                         </configuration>
                     </execution>
                 </executions>
@@ -191,7 +214,11 @@
                 <configuration>
                     <buildArgs>
                         <buildArg>--enable-url-protocols=http</buildArg>
-                        <buildArg>--initialize-at-build-time=ru.devaarno.staticsquashserver</buildArg>
+                        <buildArg>--initialize-at-build-time=io.helidon,com.beust.jcommander,ru.devaarno.staticsquashserver</buildArg>
+                        <buildArg>--no-fallback</buildArg>
+                        <buildArg>--future-defaults=all</buildArg>
+                        <buildArg>-march=native</buildArg>
+                        <buildArg>-O3</buildArg>
                     </buildArgs>
                 </configuration>
             </plugin>
@@ -217,6 +244,9 @@
                     <systemPropertyVariables>
                         <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
                     </systemPropertyVariables>
+                    <argLine>
+                        -agentlib:native-image-agent=config-merge-dir=src/main/resources/META-INF/native-image/ru/devaarno/staticsquashserver/static-squash-server
+                    </argLine>
                 </configuration>
             </plugin>
 
