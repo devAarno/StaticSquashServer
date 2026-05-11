@@ -28,9 +28,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import ru.devaarno.staticsquashserver.archive.ArchiveParser;
-import ru.devaarno.staticsquashserver.logging.SimpleLogger;
 
 /**
  * Queue for managing concurrent requests to archive entries.
@@ -38,6 +39,9 @@ import ru.devaarno.staticsquashserver.logging.SimpleLogger;
  * Each waiting request receives its own copy of the entry data.
  */
 public final class RequestQueue {
+
+    private static final Logger LOGGER = Logger.getLogger(RequestQueue.class.getName());
+
     private final ConcurrentHashMap<String, EntryRequest> pendingRequests = new ConcurrentHashMap<>();
     private final ArchiveParser archiveParser;
     private final Path archivePath;
@@ -49,9 +53,9 @@ public final class RequestQueue {
         this.archivePath = archivePath;
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
         if (archivePath != null) {
-            SimpleLogger.info("RequestQueue initialized for archive: " + archivePath.getFileName());
+            LOGGER.info("RequestQueue initialized for archive: " + archivePath.getFileName());
         } else {
-            SimpleLogger.info("RequestQueue initialized (test mode)");
+            LOGGER.info("RequestQueue initialized (test mode)");
         }
     }
 
@@ -67,27 +71,27 @@ public final class RequestQueue {
      */
     public InputStream getEntryStream(String entryPath) throws IOException, InterruptedException {
         if (shutdown) {
-            SimpleLogger.warn("Request queue is shut down, rejecting request for: " + entryPath);
+            LOGGER.log(Level.WARNING, "Request queue is shut down, rejecting request for: {0}", entryPath);
             throw new IOException("Request queue is shut down");
         }
 
         boolean isNew = !pendingRequests.containsKey(entryPath);
         EntryRequest request = pendingRequests.computeIfAbsent(entryPath, path -> {
             EntryRequest req = new EntryRequest(path);
-            SimpleLogger.info("Processing entry: " + path);
+            LOGGER.log(Level.INFO, "Processing entry: {0}", path);
             executor.execute(() -> processRequest(req));
             return req;
         });
 
         if (!isNew) {
-            SimpleLogger.info("Merged duplicate request for: " + entryPath);
+            LOGGER.log(Level.INFO, "Merged duplicate request for: {0}", entryPath);
         }
 
         request.latch().await();
 
         byte[] data = request.result();
         if (data == null) {
-            SimpleLogger.warn("Entry not found: " + entryPath);
+            LOGGER.log(Level.WARNING, "Entry not found: {0}", entryPath);
             throw new IOException("Entry not found: " + entryPath);
         }
         return new ByteArrayInputStream(data);
@@ -102,7 +106,7 @@ public final class RequestQueue {
                 byte[] data = stream.readAllBytes();
                 request.setResult(data);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             request.setResult(null);
         } finally {
             request.latch().countDown();
@@ -110,7 +114,7 @@ public final class RequestQueue {
             if (stream != null) {
                 try {
                     stream.close();
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     // Ignore close exception
                 }
             }
@@ -121,19 +125,19 @@ public final class RequestQueue {
      * Shuts down the request queue gracefully.
      */
     public void shutdown() {
-        SimpleLogger.info("Shutting down RequestQueue...");
+        LOGGER.info("Shutting down RequestQueue...");
         shutdown = true;
         executor.shutdown();
         try {
             if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                SimpleLogger.warn("Executor termination timeout, forcing shutdown");
+                LOGGER.warning("Executor termination timeout, forcing shutdown");
                 executor.shutdownNow();
             }
-        } catch (InterruptedException e) {
-            SimpleLogger.warn("Interrupted during shutdown, forcing executor shutdown");
+        } catch (final InterruptedException e) {
+            LOGGER.warning("Interrupted during shutdown, forcing executor shutdown");
             executor.shutdownNow();
             Thread.currentThread().interrupt();
         }
-        SimpleLogger.info("RequestQueue shutdown complete");
+        LOGGER.info("RequestQueue shutdown complete");
     }
 }

@@ -26,20 +26,25 @@ import io.helidon.webserver.http.Handler;
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.http.ServerRequest;
 import io.helidon.webserver.http.ServerResponse;
+import ru.devaarno.staticsquashserver.Main;
 import ru.devaarno.staticsquashserver.archive.ArchiveDescriptor;
 import ru.devaarno.staticsquashserver.archive.ArchiveEntryInfo;
 import ru.devaarno.staticsquashserver.archive.ArchiveParser;
 import ru.devaarno.staticsquashserver.archive.ArchiveParserFactory;
 import ru.devaarno.staticsquashserver.cli.CliConfig;
-import ru.devaarno.staticsquashserver.logging.SimpleLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class ArchiveWebServer {
+
+    private static final Logger LOGGER = Logger.getLogger(ArchiveWebServer.class.getName());
+
     private final WebServer server;
     private final ArchiveParser archiveParser;
     private final ArchiveDescriptor archiveDescriptor;
@@ -52,16 +57,16 @@ public final class ArchiveWebServer {
         if (!Files.exists(archivePath)) {
             throw new IllegalArgumentException("Archive file not found: " + archivePath);
         }
-        
-        SimpleLogger.info("Parsing archive: " + archivePath);
+
+        LOGGER.log(Level.INFO, "Parsing archive: {0}", archivePath);
         this.archiveParser = ArchiveParserFactory.create(archivePath);
         this.archiveDescriptor = archiveParser.parse(archivePath);
         
         if (archiveDescriptor.entries().isEmpty()) {
             throw new IllegalStateException("Archive contains no files");
         }
-        
-        SimpleLogger.info("Archive parsed successfully: " + archiveDescriptor.entries().size() + " files found");
+
+        LOGGER.log(Level.INFO, "Archive parsed successfully: {0} files found", archiveDescriptor.entries().size());
         this.requestQueue = new RequestQueue(archiveParser, archivePath);
         
         this.server = WebServer
@@ -120,7 +125,7 @@ public final class ArchiveWebServer {
 
     public void start() {
         server.start();
-        SimpleLogger.info("Server started on port " + server.port());
+        LOGGER.log(Level.INFO, "Server started on port {0}", server.port());
     }
 
     public void awaitShutdown() {
@@ -134,10 +139,10 @@ public final class ArchiveWebServer {
     }
 
     public void stop() {
-        SimpleLogger.info("Stopping server...");
+        LOGGER.info("Stopping server...");
         server.stop();
         requestQueue.shutdown();
-        SimpleLogger.info("Server stopped");
+        LOGGER.info("Server stopped");
     }
 
     public int port() {

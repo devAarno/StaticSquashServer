@@ -19,12 +19,23 @@
 
 package ru.devaarno.staticsquashserver;
 
+import io.helidon.logging.common.LogConfig;
 import ru.devaarno.staticsquashserver.cli.CliConfig;
-import ru.devaarno.staticsquashserver.logging.SimpleLogger;
 import ru.devaarno.staticsquashserver.server.ArchiveWebServer;
+import ru.devaarno.staticsquashserver.server.RequestQueue;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class Main {
+
+    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
+
     static void main(final String[] args) {
+
+        // load logging configuration
+        LogConfig.configureRuntime();
+
         try {
             
             ArchiveWebServer server = new ArchiveWebServer(
@@ -37,10 +48,10 @@ public final class Main {
             server.awaitShutdown();
             
         } catch (final IllegalArgumentException e) {
-            SimpleLogger.error("Configuration error: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Configuration error: {0}", e.getMessage());
             System.exit(1);
         } catch (final Exception e) {
-            SimpleLogger.error("Application error: " + e.getMessage(), e);
+            LOGGER.log(Level.SEVERE, "Application error: {0}", e.getMessage());
             System.exit(1);
         }
     }
