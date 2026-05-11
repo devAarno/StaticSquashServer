@@ -22,7 +22,6 @@ package ru.devaarno.staticsquashserver;
 import io.helidon.logging.common.LogConfig;
 import ru.devaarno.staticsquashserver.cli.CliConfig;
 import ru.devaarno.staticsquashserver.server.ArchiveWebServer;
-import ru.devaarno.staticsquashserver.server.RequestQueue;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
