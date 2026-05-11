@@ -26,7 +26,6 @@ import io.helidon.webserver.http.Handler;
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.http.ServerRequest;
 import io.helidon.webserver.http.ServerResponse;
-import ru.devaarno.staticsquashserver.Main;
 import ru.devaarno.staticsquashserver.archive.ArchiveDescriptor;
 import ru.devaarno.staticsquashserver.archive.ArchiveEntryInfo;
 import ru.devaarno.staticsquashserver.archive.ArchiveParser;
@@ -35,7 +34,6 @@ import ru.devaarno.staticsquashserver.cli.CliConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.Level;

@@ -19,19 +19,18 @@
 
 package ru.devaarno.staticsquashserver.server;
 
+import ru.devaarno.staticsquashserver.archive.ArchiveParser;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import ru.devaarno.staticsquashserver.archive.ArchiveParser;
 
 /**
  * Queue for managing concurrent requests to archive entries.
