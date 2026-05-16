@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -48,6 +49,7 @@ public final class ArchiveWebServer {
     private final ArchiveDescriptor archiveDescriptor;
     private final Path archivePath;
     private final RequestQueue requestQueue;
+    private final CountDownLatch shutdownLatch = new CountDownLatch(1);
 
     public ArchiveWebServer(final CliConfig config) {
         this.archivePath = Path.of(config.getArchivePath());
@@ -86,7 +88,7 @@ public final class ArchiveWebServer {
         });
     }
 
-    private Handler createHandler(ArchiveEntryInfo entryInfo) {
+    private Handler createHandler(final ArchiveEntryInfo entryInfo) {
         return (final ServerRequest _, final ServerResponse resp) -> {
             try {
                 InputStream entryStream = requestQueue.getEntryStream(entryInfo.path());
@@ -128,10 +130,8 @@ public final class ArchiveWebServer {
 
     public void awaitShutdown() {
         try {
-            while (server.isRunning()) {
-                Thread.sleep(1000);
-            }
-        } catch (InterruptedException e) {
+            shutdownLatch.await();
+        } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }
@@ -140,6 +140,7 @@ public final class ArchiveWebServer {
         LOGGER.info("Stopping server...");
         server.stop();
         requestQueue.shutdown();
+        shutdownLatch.countDown();
         LOGGER.info("Server stopped");
     }
 
