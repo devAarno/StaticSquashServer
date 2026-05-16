@@ -160,6 +160,15 @@ This project is open-source and uses a combined licensing model:
 
 ---
 
+## Skills sources
+
+- [context7 and java-engineer](https://github.com/JetBrains/junie-extensions);
+- [java-patterns](https://github.com/projectious-work/processkit/tree/main/src/context/skills/engineering/java-patterns);
+- [api-design, architecture-decision-records, iterative-retrieval, java-coding-standards, search-first, strategic-compact, tdd-workflow, verification-loop](.opencode/skills/verification-loop)](.opencode/skills/tdd-workflow)](.opencode/skills/strategic-compact)](.opencode/skills/search-first)](.opencode/skills/java-coding-standards)](.opencode/skills/iterative-retrieval)](.opencode/skills/architecture-decision-records)](https://github.com/RogerioSobrinho/codeme-copilot/);
+- [junit](https://github.com/partme-ai/full-stack-skills/tree/main/skills/testing-skills/junit)
+
+---
+
 ## Contributing
 
 As this is a young and evolving project, contributions and feedback are welcome. Please ensure that any changes align with the project's core principles: simplicity, efficiency, and minimal resource consumption.
