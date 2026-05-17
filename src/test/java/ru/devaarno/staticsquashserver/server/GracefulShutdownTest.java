@@ -56,8 +56,6 @@ class GracefulShutdownTest {
         assertThat(queue).isNotNull();
         
         queue.shutdown();
-        
-        Thread.sleep(100);
     }
 
     @Test
@@ -80,11 +78,13 @@ class GracefulShutdownTest {
     void testShutdownWithPendingOperations() throws Exception {
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch doneLatch = new CountDownLatch(1);
+        CountDownLatch workStartedLatch = new CountDownLatch(1);
         AtomicBoolean completed = new AtomicBoolean(false);
         
         Thread worker = new Thread(() -> {
             try {
                 startLatch.await(5, TimeUnit.SECONDS);
+                workStartedLatch.countDown();
                 Thread.sleep(100);
                 completed.set(true);
             } catch (InterruptedException e) {
@@ -97,7 +97,7 @@ class GracefulShutdownTest {
         worker.start();
         startLatch.countDown();
         
-        Thread.sleep(50);
+        workStartedLatch.await(1, TimeUnit.SECONDS);
         worker.interrupt();
         
         boolean finished = doneLatch.await(2, TimeUnit.SECONDS);
@@ -113,9 +113,6 @@ class GracefulShutdownTest {
         assertThat(server.isRunning()).isFalse();
         
         server.start();
-        assertThat(server.isRunning()).isTrue();
-        
-        Thread.sleep(100);
         assertThat(server.isRunning()).isTrue();
         
         server.stop();

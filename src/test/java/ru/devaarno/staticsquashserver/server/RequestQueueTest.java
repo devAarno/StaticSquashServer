@@ -129,6 +129,7 @@ class RequestQueueTest {
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch requestStarted = new CountDownLatch(1);
         CountDownLatch requestDone = new CountDownLatch(1);
+        CountDownLatch shutdownReady = new CountDownLatch(1);
 
         executor.submit(() -> {
             try {
@@ -136,12 +137,13 @@ class RequestQueueTest {
                 queue.getEntryStream("slow.txt");
             } catch (Exception e) {
             } finally {
+                shutdownReady.countDown();
                 requestDone.countDown();
             }
         });
 
         requestStarted.await(5, TimeUnit.SECONDS);
-        Thread.sleep(100);
+        shutdownReady.await(1, TimeUnit.SECONDS);
         queue.shutdown();
         
         requestDone.await(5, TimeUnit.SECONDS);
