@@ -23,7 +23,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -32,8 +33,8 @@ import java.util.zip.CRC32;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -88,10 +89,10 @@ class ArchiveParserInterfaceTest {
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testParseReturnsCorrectFileCount(ArchiveFormat format) {
+    void testInitScanReturnsCorrectFileCount(ArchiveFormat format) {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
-        ArchiveDescriptor descriptor = parser.parse(archive);
+        ArchiveDescriptor descriptor = parser.initScan();
 
         assertEquals(16, descriptor.entries().size(), 
             "Should have 16 files in " + format + " archive");
@@ -101,10 +102,10 @@ class ArchiveParserInterfaceTest {
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testParseContainsAllExpectedFiles(ArchiveFormat format) {
+    void testInitScanContainsAllExpectedFiles(ArchiveFormat format) {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
-        ArchiveDescriptor descriptor = parser.parse(archive);
+        ArchiveDescriptor descriptor = parser.initScan();
 
         List<String> entryPaths = descriptor.entries().stream()
             .map(ArchiveEntryInfo::path)
@@ -130,10 +131,10 @@ class ArchiveParserInterfaceTest {
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testParseEntrySizes(ArchiveFormat format) {
+    void testInitScanEntrySizes(ArchiveFormat format) {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
-        ArchiveDescriptor descriptor = parser.parse(archive);
+        ArchiveDescriptor descriptor = parser.initScan();
 
         ArchiveEntryInfo emptyFile = descriptor.entries().stream()
             .filter(e -> e.path().equals("empty_file.txt"))
@@ -150,101 +151,79 @@ class ArchiveParserInterfaceTest {
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testGetEntryInputStream(ArchiveFormat format) throws Exception {
+    void testFillOutput(ArchiveFormat format) throws Exception {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
 
-        try (final InputStream is = parser.getEntryInputStream(archive, "index.html")) {
-            assertNotNull(is, "index.html stream should not be null");
-            assertTrue(is.readAllBytes().length > 0, "index.html should have content");
+        try (final var byteArrayOutputStream = new ByteArrayOutputStream()) {
+            parser.fillOutput("index.html", byteArrayOutputStream);
+            final var bytes = byteArrayOutputStream.toByteArray();
+            assertNotNull(bytes, "index.html stream should not be null");
+            assertTrue(bytes.length > 0, "index.html should have content");
         }
     }
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testGetEntryInputStreamDeepNested(ArchiveFormat format) throws Exception {
+    void testFillOutputDeepNested(ArchiveFormat format) throws Exception {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
 
-        try (InputStream is = parser.getEntryInputStream(archive, "data/nested/deep/level3.json")) {
-            assertNotNull(is, "level3.json stream should not be null");
+        try (final var byteArrayOutputStream = new ByteArrayOutputStream()) {
+            parser.fillOutput("data/nested/deep/level3.json", byteArrayOutputStream);
+            final var bytes = byteArrayOutputStream.toByteArray();
+            assertNotNull(bytes, "level3.json stream should not be null");
             final CRC32 crc32 = new CRC32();
-            crc32.update(is.readAllBytes());
+            crc32.update(bytes);
             assertEquals(LEVEL3_JSON_CRC32, crc32.getValue(), CHECKSUM_MISMATCH);
         }
     }
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testGetEntryInputStreamFileWithSpaces(ArchiveFormat format) throws Exception {
+    void testFillOutputFileWithSpaces(ArchiveFormat format) throws Exception {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
 
-        try (InputStream is = parser.getEntryInputStream(archive, "file with spaces.txt")) {
-            assertNotNull(is, "file with spaces.txt stream should not be null");
+        try (final var byteArrayOutputStream = new ByteArrayOutputStream()) {
+            parser.fillOutput("file with spaces.txt", byteArrayOutputStream);
+            final var bytes = byteArrayOutputStream.toByteArray();
+            assertNotNull(bytes, "file with spaces.txt stream should not be null");
             final CRC32 crc32 = new CRC32();
-            crc32.update(is.readAllBytes());
+            crc32.update(bytes);
             assertEquals(SPACES_TXT_CRC32, crc32.getValue(), CHECKSUM_MISMATCH);
         }
     }
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testGetEntryInputStreamLargeFile(ArchiveFormat format) throws Exception {
+    void testFillOutputLargeFile(ArchiveFormat format) throws Exception {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
 
-        try (InputStream is = parser.getEntryInputStream(archive, "data/large_dummy.bin")) {
-            assertNotNull(is, "large_dummy.bin stream should not be null");
-            byte[] content = is.readAllBytes();
-            assertEquals(65536, content.length, "large_dummy.bin should be 65536 bytes");
+        try (final var byteArrayOutputStream = new ByteArrayOutputStream()) {
+            parser.fillOutput("data/large_dummy.bin", byteArrayOutputStream);
+            final var bytes = byteArrayOutputStream.toByteArray();
+            assertNotNull(bytes, "large_dummy.bin stream should not be null");
+            assertEquals(65536, bytes.length, "large_dummy.bin should be 65536 bytes");
             final CRC32 crc32 = new CRC32();
-            crc32.update(content);
+            crc32.update(bytes);
             assertEquals(LARGE_DUMMY_BIN_CRC32, crc32.getValue(), CHECKSUM_MISMATCH);
         }
     }
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
-    void testGetEntryInputStreamNotFound(ArchiveFormat format) {
+    void testFillOutputNotFound(ArchiveFormat format)  throws Exception {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
 
-        InputStream is = parser.getEntryInputStream(archive, "nonexistent_file.txt");
-        assertNull(is, "nonexistent file should return null stream");
-    }
-
-    @ParameterizedTest
-    @EnumSource(ArchiveFormat.class)
-    void testForEachEntry(ArchiveFormat format) {
-        Path archive = getArchivePath(format);
-        ArchiveParser parser = ArchiveParserFactory.create(archive);
-
-        final int[] count = {0};
-        parser.forEachEntry(archive, entry -> {
-            assertNotNull(entry.path(), "entry path should not be null");
-            assertNotNull(entry.mediaType(), "entry mediaType should not be null");
-            assertNotNull(entry.modificationTime(), "entry modificationTime should not be null");
-            count[0]++;
-        });
-
-        assertEquals(16, count[0], "Should iterate over 16 files");
-    }
-
-    @ParameterizedTest
-    @EnumSource(ArchiveFormat.class)
-    void testForEachEntryCollectsAllFiles(ArchiveFormat format) {
-        Path archive = getArchivePath(format);
-        ArchiveParser parser = ArchiveParserFactory.create(archive);
-
-        List<String> collectedPaths = new java.util.ArrayList<>();
-        parser.forEachEntry(archive, entry -> collectedPaths.add(entry.path()));
-
-        assertTrue(collectedPaths.contains("index.html"));
-        assertTrue(collectedPaths.contains("css/style.css"));
-        assertTrue(collectedPaths.contains("js/lib/vendor.js"));
-        assertTrue(collectedPaths.contains("data/nested/deep/level3.json"));
-        assertTrue(collectedPaths.contains("allure-report/index.html"));
+        try (final var byteArrayOutputStream = new ByteArrayOutputStream()) {
+            assertThrowsExactly(
+                    FileNotFoundException.class,
+                    () -> parser.fillOutput("nonexistent_file.txt", byteArrayOutputStream)
+            );
+        }
     }
 
     @ParameterizedTest
@@ -252,7 +231,7 @@ class ArchiveParserInterfaceTest {
     void testMediaTypeDetection(ArchiveFormat format) {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
-        ArchiveDescriptor descriptor = parser.parse(archive);
+        ArchiveDescriptor descriptor = parser.initScan();
 
         ArchiveEntryInfo htmlEntry = descriptor.entries().stream()
             .filter(e -> e.path().equals("index.html"))
@@ -296,7 +275,7 @@ class ArchiveParserInterfaceTest {
     void testAllureReportEntries(ArchiveFormat format) {
         Path archive = getArchivePath(format);
         ArchiveParser parser = ArchiveParserFactory.create(archive);
-        ArchiveDescriptor descriptor = parser.parse(archive);
+        ArchiveDescriptor descriptor = parser.initScan();
 
         List<String> entryPaths = descriptor.entries().stream()
             .map(ArchiveEntryInfo::path)

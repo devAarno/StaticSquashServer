@@ -20,32 +20,24 @@
 package ru.devaarno.staticsquashserver.archive;
 
 import java.nio.file.Path;
+import java.util.Locale;
 
-/**
- * Factory for creating archive parsers based on file extension.
- */
+
 public final class ArchiveParserFactory {
     
     private ArchiveParserFactory() { }
-    
-    /**
-     * Creates an appropriate parser for the given archive path.
-     * 
-     * @param archivePath path to the archive file
-     * @return an ArchiveParser instance for the detected format
-     * @throws IllegalArgumentException if archive format is not supported
-     */
+
     public static ArchiveParser create(final Path archivePath) {
-        String name = archivePath.getFileName().toString().toLowerCase();
+        String name = archivePath.getFileName().toString().toLowerCase(Locale.getDefault());
         
         if (name.endsWith(".zip")) {
-            return new ZipArchiveParser();
+            return new ZipArchiveParser(archivePath);
         }
         if (name.endsWith(".tar.gz")) {
-            return new TarGzArchiveParser();
+            return new TarGzArchiveParser(archivePath);
         }
         if (name.endsWith(".tar.xz")) {
-            return new TarXzArchiveParser();
+            return new TarXzArchiveParser(archivePath);
         }
         
         throw new IllegalArgumentException("Unsupported archive format: " + archivePath.getFileName());

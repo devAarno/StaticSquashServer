@@ -22,29 +22,36 @@ package ru.devaarno.staticsquashserver.archive;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 
-import java.io.InputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Parser for ZIP archive format.
  */
 public final class ZipArchiveParser implements ArchiveParser {
-    
+
+    private final Path actualArchivePath;
+
+    public ZipArchiveParser(final Path archivePath) {
+        this.actualArchivePath = archivePath;
+    }
+
     @Override
     public ArchiveFormat format() {
         return ArchiveFormat.ZIP;
     }
     
     @Override
-    public ArchiveDescriptor parse(Path archivePath) {
+    public ArchiveDescriptor initScan() {
         List<ArchiveEntryInfo> entries = new ArrayList<>();
         
-        try (ZipFile zipFile = ZipFile.builder().setPath(archivePath).get()) {
+        try (ZipFile zipFile = ZipFile.builder().setPath(actualArchivePath).get()) {
             Enumeration<ZipArchiveEntry> entriesEnum = zipFile.getEntries();
             
             while (entriesEnum.hasMoreElements()) {
@@ -60,48 +67,22 @@ public final class ZipArchiveParser implements ArchiveParser {
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to parse ZIP archive: " + archivePath, e);
+            throw new RuntimeException("Failed to parse ZIP archive: " + actualArchivePath, e);
         }
         
-        return new ArchiveDescriptor(archivePath, ArchiveFormat.ZIP, entries);
+        return new ArchiveDescriptor(actualArchivePath, ArchiveFormat.ZIP, entries);
     }
     
     @Override
-    public InputStream getEntryInputStream(Path archivePath, String entryPath) {
-        try {
-            ZipFile zipFile = ZipFile.builder().setPath(archivePath).get();
+    public void fillOutput(final String entryPath, final OutputStream outputStream) throws IOException {
+        try (final var zipFile = ZipFile.builder().setPath(actualArchivePath).get()) {
             ZipArchiveEntry entry = zipFile.getEntry(entryPath);
             
             if (entry == null) {
-                zipFile.close();
-                return null;
+                throw new FileNotFoundException();
             }
             
-            return zipFile.getInputStream(entry);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get entry stream from ZIP archive: " + archivePath, e);
-        }
-    }
-    
-    @Override
-    public void forEachEntry(Path archivePath, Consumer<ArchiveEntryInfo> entryConsumer) {
-        try (ZipFile zipFile = ZipFile.builder().setPath(archivePath).get()) {
-            Enumeration<ZipArchiveEntry> entriesEnum = zipFile.getEntries();
-            
-            while (entriesEnum.hasMoreElements()) {
-                ZipArchiveEntry entry = entriesEnum.nextElement();
-                
-                if (!entry.isDirectory()) {
-                    entryConsumer.accept(new ArchiveEntryInfo(
-                            entry.getName(),
-                            entry.getSize(),
-                            ArchiveParser.detectMediaType(entry.getName()),
-                            Instant.ofEpochMilli(entry.getTime())
-                    ));
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to iterate ZIP archive: " + archivePath, e);
+            zipFile.getInputStream(entry).transferTo(outputStream);
         }
     }
 }
