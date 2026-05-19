@@ -21,9 +21,9 @@ package ru.devaarno.staticsquashserver.server;
 
 import ru.devaarno.staticsquashserver.archive.ArchiveParser;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -35,7 +35,7 @@ import java.util.logging.Logger;
 /**
  * Queue for managing concurrent requests to archive entries.
  * Merges duplicate requests for the same entry and processes them using virtual threads.
- * Each waiting request receives its own copy of the entry data.
+ * Uses piped streams to avoid buffering data in memory.
  */
 public final class RequestQueue {
 
@@ -61,7 +61,7 @@ public final class RequestQueue {
     /**
      * Gets an input stream for an archive entry.
      * If multiple requests for the same entry are pending, they are merged and wait for the same result.
-     * Each caller receives its own independent InputStream.
+     * The stream is provided directly from the archive without buffering.
      *
      * @param entryPath path of the entry in the archive
      * @return input stream for the entry content
@@ -76,9 +76,15 @@ public final class RequestQueue {
 
         boolean isNew = !pendingRequests.containsKey(entryPath);
         EntryRequest request = pendingRequests.computeIfAbsent(entryPath, path -> {
-            EntryRequest req = new EntryRequest(path);
+            EntryRequest req;
+            try {
+                req = new EntryRequest(path);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create entry request", e);
+            }
             LOGGER.log(Level.INFO, "Processing entry: {0}", path);
-            executor.execute(() -> processRequest(req));
+            final EntryRequest finalReq = req;
+            executor.execute(() -> processRequest(finalReq));
             return req;
         });
 
@@ -88,35 +94,45 @@ public final class RequestQueue {
 
         request.latch().await();
 
-        byte[] data = request.result();
-        if (data == null) {
-            LOGGER.log(Level.WARNING, "Entry not found: {0}", entryPath);
-            throw new IOException("Entry not found: " + entryPath);
+        if (request.error() != null) {
+            LOGGER.log(Level.WARNING, "Entry processing failed: {0}: {1}", new Object[]{entryPath, request.error().getMessage()});
+            throw new IOException("Entry processing failed: " + entryPath, request.error());
         }
-        return new ByteArrayInputStream(data);
+
+        return request.inputStream();
     }
 
     private void processRequest(EntryRequest request) {
-        InputStream stream = archiveParser.getEntryInputStream(archivePath, request.entryPath());
+        InputStream stream = null;
+        OutputStream outputStream = null;
         try {
+            stream = archiveParser.getEntryInputStream(archivePath, request.entryPath());
             if (stream == null) {
-                request.setResult(null);
+                request.setResult(new IOException("Entry not found"));
             } else {
-                byte[] data = stream.readAllBytes();
-                request.setResult(data);
+                stream.transferTo(request.outputStream());
             }
         } catch (final IOException e) {
-            request.setResult(null);
+            if (request.error() == null) {
+                request.setResult(e);
+            }
         } finally {
-            request.latch().countDown();
-            pendingRequests.remove(request.entryPath());
+            /* if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (final IOException e) {
+                    LOGGER.log(Level.FINE, "Error closing output stream", e);
+                }
+            }*/
             if (stream != null) {
                 try {
                     stream.close();
                 } catch (final IOException e) {
-                    // Ignore close exception
+                    LOGGER.log(Level.FINE, "Error closing input stream", e);
                 }
             }
+            request.latch().countDown();
+            pendingRequests.remove(request.entryPath());
         }
     }
 

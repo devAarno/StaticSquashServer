@@ -19,21 +19,29 @@
 
 package ru.devaarno.staticsquashserver.server;
 
+import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.concurrent.CountDownLatch;
 
 /**
  * Represents a pending request for an archive entry.
  * Used internally by RequestQueue to track and synchronize concurrent requests.
+ * Uses a piped stream to avoid buffering data in memory.
  */
 public final class EntryRequest {
     private final String entryPath;
     private final CountDownLatch latch;
-    private volatile byte[] result;
+    private final PipedInputStream inputStream;
+    private final PipedOutputStream outputStream;
+    private volatile Throwable error;
 
-    public EntryRequest(String entryPath) {
+    public EntryRequest(String entryPath) throws IOException {
         this.entryPath = entryPath;
         this.latch = new CountDownLatch(1);
-        this.result = null;
+        this.inputStream = new PipedInputStream();
+        this.outputStream = new PipedOutputStream(inputStream);
+        this.error = null;
     }
 
     public String entryPath() {
@@ -44,11 +52,19 @@ public final class EntryRequest {
         return latch;
     }
 
-    public byte[] result() {
-        return result;
+    public PipedInputStream inputStream() {
+        return inputStream;
     }
 
-    public void setResult(byte[] result) {
-        this.result = result;
+    public PipedOutputStream outputStream() {
+        return outputStream;
+    }
+
+    public void setResult(Throwable error) {
+        this.error = error;
+    }
+
+    public Throwable error() {
+        return error;
     }
 }
