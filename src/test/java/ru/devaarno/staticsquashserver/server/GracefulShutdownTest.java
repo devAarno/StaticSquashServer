@@ -50,15 +50,6 @@ class GracefulShutdownTest {
     }
 
     @Test
-    void testRequestQueueShutdown() throws Exception {
-        RequestQueue queue = new RequestQueue(null, null);
-        
-        assertThat(queue).isNotNull();
-        
-        queue.shutdown();
-    }
-
-    @Test
     void testMultipleStopCalls() throws Exception {
         WebServer server = WebServer.builder()
                 .port(0)

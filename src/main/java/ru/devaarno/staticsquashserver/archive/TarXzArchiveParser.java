@@ -24,29 +24,37 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 
 import java.io.BufferedInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Parser for TAR.XZ archive format.
  */
 public final class TarXzArchiveParser implements ArchiveParser {
-    
+
+    private final Path actualArchivePath;
+
+    public TarXzArchiveParser(final Path actualArchivePath) {
+        this.actualArchivePath = actualArchivePath;
+    }
+
     @Override
     public ArchiveFormat format() {
         return ArchiveFormat.TAR_XZ;
     }
     
     @Override
-    public ArchiveDescriptor parse(Path archivePath) {
+    public ArchiveDescriptor initScan() {
         List<ArchiveEntryInfo> entries = new ArrayList<>();
         
-        try (InputStream fis = Files.newInputStream(archivePath);
+        try (InputStream fis = Files.newInputStream(actualArchivePath);
              BufferedInputStream bis = new BufferedInputStream(fis);
              XZCompressorInputStream xzis = new XZCompressorInputStream(bis);
              TarArchiveInputStream tais = new TarArchiveInputStream(xzis)) {
@@ -62,55 +70,28 @@ public final class TarXzArchiveParser implements ArchiveParser {
                     ));
                 }
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse TAR.XZ archive: " + archivePath, e);
+        } catch (final Exception e) {
+            throw new RuntimeException("Failed to parse TAR.XZ archive: " + actualArchivePath, e);
         }
         
-        return new ArchiveDescriptor(archivePath, ArchiveFormat.TAR_XZ, entries);
+        return new ArchiveDescriptor(actualArchivePath, ArchiveFormat.TAR_XZ, entries);
     }
     
     @Override
-    public InputStream getEntryInputStream(Path archivePath, String entryPath) {
-        try {
-            InputStream fis = Files.newInputStream(archivePath);
-            BufferedInputStream bis = new BufferedInputStream(fis);
-            XZCompressorInputStream xzis = new XZCompressorInputStream(bis);
-            TarArchiveInputStream tais = new TarArchiveInputStream(xzis);
-            
+    public void fillOutput(final String entryPath, final OutputStream outputStream) throws IOException {
+        try (
+                final var fis = Files.newInputStream(actualArchivePath);
+                final var bis = new BufferedInputStream(fis);
+                final var xzis = new XZCompressorInputStream(bis);
+                final var tais = new TarArchiveInputStream(xzis)
+        ) {
             TarArchiveEntry entry;
             while ((entry = tais.getNextEntry()) != null) {
                 if (entry.getName().equals(entryPath)) {
-                    return tais;
+                    tais.transferTo(outputStream);
                 }
             }
-            
-            tais.close();
-            return null;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get entry stream from TAR.XZ archive: " + archivePath, e);
         }
-    }
-    
-    @Override
-    public void forEachEntry(Path archivePath, Consumer<ArchiveEntryInfo> entryConsumer) {
-        try (InputStream fis = Files.newInputStream(archivePath);
-             BufferedInputStream bis = new BufferedInputStream(fis);
-             XZCompressorInputStream xzis = new XZCompressorInputStream(bis);
-             TarArchiveInputStream tais = new TarArchiveInputStream(xzis)) {
-            
-            TarArchiveEntry entry;
-            while ((entry = tais.getNextEntry()) != null) {
-                if (!entry.isDirectory()) {
-                    entryConsumer.accept(new ArchiveEntryInfo(
-                            entry.getName(),
-                            entry.getSize(),
-                            ArchiveParser.detectMediaType(entry.getName()),
-                            Instant.ofEpochMilli(entry.getLastModifiedDate().getTime())
-                    ));
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to iterate TAR.XZ archive: " + archivePath, e);
-        }
+        throw new FileNotFoundException();
     }
 }

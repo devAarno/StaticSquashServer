@@ -45,7 +45,7 @@ class CorruptedArchiveTest {
         
         ArchiveParser parser = ArchiveParserFactory.create(corruptedZip);
         
-        assertThatThrownBy(() -> parser.parse(corruptedZip))
+        assertThatThrownBy(() -> parser.initScan())
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to parse");
     }
@@ -57,7 +57,7 @@ class CorruptedArchiveTest {
         
         ArchiveParser parser = ArchiveParserFactory.create(emptyFile);
         
-        assertThatThrownBy(() -> parser.parse(emptyFile))
+        assertThatThrownBy(() -> parser.initScan())
                 .isInstanceOf(RuntimeException.class);
     }
 
@@ -72,7 +72,7 @@ class CorruptedArchiveTest {
         
         ArchiveParser parser = ArchiveParserFactory.create(truncatedZip);
         
-        assertThatThrownBy(() -> parser.parse(truncatedZip))
+        assertThatThrownBy(() -> parser.initScan())
                 .isInstanceOf(RuntimeException.class);
     }
 
@@ -83,7 +83,7 @@ class CorruptedArchiveTest {
         
         ArchiveParser parser = ArchiveParserFactory.create(corruptedTarGz);
         
-        assertThatThrownBy(() -> parser.parse(corruptedTarGz))
+        assertThatThrownBy(() -> parser.initScan())
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to parse");
     }
@@ -95,7 +95,7 @@ class CorruptedArchiveTest {
         
         ArchiveParser parser = ArchiveParserFactory.create(corruptedTarXz);
         
-        assertThatThrownBy(() -> parser.parse(corruptedTarXz))
+        assertThatThrownBy(() -> parser.initScan())
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to parse");
     }
@@ -106,7 +106,7 @@ class CorruptedArchiveTest {
         
         ArchiveParser parser = ArchiveParserFactory.create(nonExistent);
         
-        assertThatThrownBy(() -> parser.parse(nonExistent))
+        assertThatThrownBy(() -> parser.initScan())
                 .isInstanceOf(RuntimeException.class);
     }
 
@@ -121,7 +121,7 @@ class CorruptedArchiveTest {
         }
         
         ArchiveParser parser = ArchiveParserFactory.create(validZip);
-        ArchiveDescriptor descriptor = parser.parse(validZip);
+        ArchiveDescriptor descriptor = parser.initScan();
         
         assertThat(descriptor.entries()).hasSize(1);
         assertThat(descriptor.entries().get(0).path()).isEqualTo("test.txt");
@@ -139,7 +139,7 @@ class CorruptedArchiveTest {
         }
         
         ArchiveParser parser = ArchiveParserFactory.create(zipWithDirs);
-        ArchiveDescriptor descriptor = parser.parse(zipWithDirs);
+        ArchiveDescriptor descriptor = parser.initScan();
         
         assertThat(descriptor.entries()).isEmpty();
     }

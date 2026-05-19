@@ -32,8 +32,8 @@ import ru.devaarno.staticsquashserver.archive.ArchiveParser;
 import ru.devaarno.staticsquashserver.archive.ArchiveParserFactory;
 import ru.devaarno.staticsquashserver.cli.CliConfig;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
@@ -48,7 +48,6 @@ public final class ArchiveWebServer {
     private final ArchiveParser archiveParser;
     private final ArchiveDescriptor archiveDescriptor;
     private final Path archivePath;
-    private final RequestQueue requestQueue;
     private final CountDownLatch shutdownLatch = new CountDownLatch(1);
 
     public ArchiveWebServer(final CliConfig config) {
@@ -60,14 +59,13 @@ public final class ArchiveWebServer {
 
         LOGGER.log(Level.INFO, "Parsing archive: {0}", archivePath);
         this.archiveParser = ArchiveParserFactory.create(archivePath);
-        this.archiveDescriptor = archiveParser.parse(archivePath);
+        this.archiveDescriptor = archiveParser.initScan();
         
         if (archiveDescriptor.entries().isEmpty()) {
             throw new IllegalStateException("Archive contains no files");
         }
 
         LOGGER.log(Level.INFO, "Archive parsed successfully: {0} files found", archiveDescriptor.entries().size());
-        this.requestQueue = new RequestQueue(archiveParser, archivePath);
         
         this.server = WebServer
                 .builder()
@@ -91,25 +89,17 @@ public final class ArchiveWebServer {
     private Handler createHandler(final ArchiveEntryInfo entryInfo) {
         return (final ServerRequest _, final ServerResponse resp) -> {
             try {
-                InputStream entryStream = requestQueue.getEntryStream(entryInfo.path());
-                
                 resp.headers().contentLength(entryInfo.size());
                 resp.headers().set(HeaderNames.CONTENT_TYPE, entryInfo.mediaType().text());
-                try (
-                        final var inputStream = entryStream;
-                        final var outputStream = resp.outputStream()
-                ) {
-                    inputStream.transferTo(outputStream);
-                }
-                
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-                resp.status(Status.INTERNAL_SERVER_ERROR_500);
-                resp.send("Request interrupted");
+                this.archiveParser.fillOutput(entryInfo.path(), resp.outputStream());
+            } catch (final FileNotFoundException e) {
+                resp.status(Status.NOT_FOUND_404);
+                resp.send("File not found: " + e.getMessage());
             } catch (final IOException e) {
                 resp.status(Status.INTERNAL_SERVER_ERROR_500);
                 resp.send("Error: " + e.getMessage());
             }
+
         };
     }
 
@@ -133,7 +123,6 @@ public final class ArchiveWebServer {
     public void stop() {
         LOGGER.info("Stopping server...");
         server.stop();
-        requestQueue.shutdown();
         shutdownLatch.countDown();
         LOGGER.info("Server stopped");
     }
