@@ -93,12 +93,6 @@ public final class ArchiveWebServer {
             try {
                 InputStream entryStream = requestQueue.getEntryStream(entryInfo.path());
                 
-                if (entryStream == null) { // Check it
-                    resp.status(Status.NOT_FOUND_404);
-                    resp.send("File not found in archive");
-                    return;
-                }
-                
                 resp.headers().contentLength(entryInfo.size());
                 resp.headers().set(HeaderNames.CONTENT_TYPE, entryInfo.mediaType().text());
                 try (
