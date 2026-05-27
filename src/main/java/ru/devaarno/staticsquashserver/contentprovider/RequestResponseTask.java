@@ -17,28 +17,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.devaarno.staticsquashserver.archive;
+package ru.devaarno.staticsquashserver.contentprovider;
 
-import io.helidon.common.media.type.MediaType;
-import ru.devaarno.staticsquashserver.mime.MimeTypeResolver;
+import io.helidon.webserver.http.ServerRequest;
+import io.helidon.webserver.http.ServerResponse;
+import ru.devaarno.staticsquashserver.archive.ArchiveEntryInfo;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.function.BiConsumer;
+import java.util.concurrent.CompletableFuture;
 
-public interface ArchiveParser {
-    
-
-    ArchiveDescriptor initScan();
-
-    void fillOutput(final String entryPath, final OutputStream outputStream) throws IOException;
-
-    ArchiveFormat format();
-
-    static MediaType detectMediaType(final String entryName) {
-        return MimeTypeResolver.resolve(entryName);
-    }
-
-    void forEachEntry(final BiConsumer<String, InputStream> action) throws IOException;
-}
+public record RequestResponseTask(
+        ServerRequest request,
+        ServerResponse response,
+        ArchiveEntryInfo archiveEntryInfo,
+        CompletableFuture<Boolean> isDone
+) { }
