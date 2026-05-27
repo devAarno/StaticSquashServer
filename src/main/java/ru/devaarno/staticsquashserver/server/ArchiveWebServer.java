@@ -19,24 +19,20 @@
 
 package ru.devaarno.staticsquashserver.server;
 
-import io.helidon.http.HeaderNames;
 import io.helidon.http.Status;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.Handler;
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.http.ServerRequest;
 import io.helidon.webserver.http.ServerResponse;
-import ru.devaarno.staticsquashserver.archive.ArchiveDescriptor;
 import ru.devaarno.staticsquashserver.archive.ArchiveEntryInfo;
-import ru.devaarno.staticsquashserver.archive.ArchiveParser;
-import ru.devaarno.staticsquashserver.archive.ArchiveParserFactory;
 import ru.devaarno.staticsquashserver.cli.CliConfig;
+import ru.devaarno.staticsquashserver.contentprovider.ContentProvider;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,10 +41,9 @@ public final class ArchiveWebServer {
     private static final Logger LOGGER = Logger.getLogger(ArchiveWebServer.class.getName());
 
     private final WebServer server;
-    private final ArchiveParser archiveParser;
-    private final ArchiveDescriptor archiveDescriptor;
     private final Path archivePath;
     private final CountDownLatch shutdownLatch = new CountDownLatch(1);
+    private final ContentProvider contentProvider;
 
     public ArchiveWebServer(final CliConfig config) {
         this.archivePath = Path.of(config.getArchivePath());
@@ -58,14 +53,8 @@ public final class ArchiveWebServer {
         }
 
         LOGGER.log(Level.INFO, "Parsing archive: {0}", archivePath);
-        this.archiveParser = ArchiveParserFactory.create(archivePath);
-        this.archiveDescriptor = archiveParser.initScan();
-        
-        if (archiveDescriptor.entries().isEmpty()) {
-            throw new IllegalStateException("Archive contains no files");
-        }
 
-        LOGGER.log(Level.INFO, "Archive parsed successfully: {0} files found", archiveDescriptor.entries().size());
+        this.contentProvider = new ContentProvider(this.archivePath);
         
         this.server = WebServer
                 .builder()
@@ -75,7 +64,7 @@ public final class ArchiveWebServer {
     }
 
     private void setupRouting(final HttpRouting.Builder routing) {
-        for (final ArchiveEntryInfo entry : archiveDescriptor.entries()) {
+        for (final ArchiveEntryInfo entry : this.contentProvider.getEntries()) {
             String path = "/" + normalizePath(entry.path());
             routing.get(path, createHandler(entry));
         }
@@ -87,8 +76,10 @@ public final class ArchiveWebServer {
     }
 
     private Handler createHandler(final ArchiveEntryInfo entryInfo) {
-        return (final ServerRequest _, final ServerResponse resp) -> {
-            try {
+        return (final ServerRequest request, final ServerResponse response) -> {
+            LOGGER.log(Level.INFO, "Request: {0}", entryInfo.path());
+            contentProvider.fillOutput(request, response, entryInfo).get(5, TimeUnit.MINUTES);
+            /*try {
                 resp.headers().contentLength(entryInfo.size());
                 resp.headers().set(HeaderNames.CONTENT_TYPE, entryInfo.mediaType().text());
                 this.archiveParser.fillOutput(entryInfo.path(), resp.outputStream());
@@ -98,7 +89,7 @@ public final class ArchiveWebServer {
             } catch (final IOException e) {
                 resp.status(Status.INTERNAL_SERVER_ERROR_500);
                 resp.send("Error: " + e.getMessage());
-            }
+            }*/
 
         };
     }
@@ -129,9 +120,5 @@ public final class ArchiveWebServer {
 
     public int port() {
         return server.port();
-    }
-
-    public ArchiveDescriptor archiveDescriptor() {
-        return archiveDescriptor;
     }
 }

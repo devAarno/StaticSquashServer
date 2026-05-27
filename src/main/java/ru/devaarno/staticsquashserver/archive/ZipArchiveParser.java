@@ -24,12 +24,14 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * Parser for ZIP archive format.
@@ -83,6 +85,17 @@ public final class ZipArchiveParser implements ArchiveParser {
             }
             
             zipFile.getInputStream(entry).transferTo(outputStream);
+        }
+    }
+
+    @Override
+    public void forEachEntry(BiConsumer<String, InputStream> action) throws IOException {
+        try (final var zipFile = ZipFile.builder().setPath(actualArchivePath).get()) {
+            final var entries = zipFile.getEntries();
+            while (entries.hasMoreElements()) {
+                final var entry = entries.nextElement();
+                action.accept(entry.getName(), zipFile.getInputStream(entry));
+            }
         }
     }
 }

@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 
 abstract class AbstractTarArchiveParser implements ArchiveParser {
@@ -91,5 +92,20 @@ abstract class AbstractTarArchiveParser implements ArchiveParser {
             }
         }
         throw new FileNotFoundException();
+    }
+
+    @Override
+    public void forEachEntry(BiConsumer<String, InputStream> action) throws IOException {
+        try (
+                final var fis = Files.newInputStream(actualArchivePath);
+                final var bis = new BufferedInputStream(fis);
+                final var cis = getCompressionChainMethod(bis);
+                final var tais = new TarArchiveInputStream(cis)
+        ) {
+            TarArchiveEntry entry;
+            while ((entry = tais.getNextEntry()) != null) {
+                action.accept(entry.getName(), tais);
+            }
+        }
     }
 }
