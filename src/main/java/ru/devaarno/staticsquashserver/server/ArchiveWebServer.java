@@ -46,7 +46,7 @@ public final class ArchiveWebServer {
     private final ContentProvider contentProvider;
 
     public ArchiveWebServer(final CliConfig config) {
-        this.archivePath = Path.of(config.getArchivePath());
+        this.archivePath = config.getArchivePath();
         
         if (!Files.exists(archivePath)) {
             throw new IllegalArgumentException("Archive file not found: " + archivePath);

@@ -19,6 +19,7 @@
 
 package ru.devaarno.staticsquashserver.cli;
 
+import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -29,6 +30,8 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CliConfigTest {
 
@@ -60,7 +63,7 @@ class CliConfigTest {
         CliConfig config = CliConfig.parse(args);
 
         assertThat(config.getPort()).isEqualTo(8888);
-        assertThat(config.getArchivePath()).isEqualTo(archiveFile.toString());
+        assertThat(config.getArchivePath()).isEqualTo(archiveFile);
     }
 
     @Test
@@ -70,7 +73,7 @@ class CliConfigTest {
         String[] args = {"--archive", archiveFile.toString()};
         CliConfig config = CliConfig.parse(args);
 
-        assertThat(config.getArchivePath()).isEqualTo(archiveFile.toString());
+        assertThat(config.getArchivePath()).isEqualTo(archiveFile);
     }
 
     @Test
@@ -81,7 +84,7 @@ class CliConfigTest {
         String[] args = {"--archive", archiveFile.toString()};
         CliConfig config = CliConfig.parse(args);
 
-        assertThat(config.getArchivePath()).isEqualTo(archiveFile.toString());
+        assertThat(config.getArchivePath()).isEqualTo(archiveFile);
     }
 
     @Test
@@ -90,7 +93,7 @@ class CliConfigTest {
 
         assertThatThrownBy(() -> CliConfig.parse(args))
                 .isInstanceOf(ParameterException.class)
-                .hasMessageContaining("Archive path is required");
+                .hasMessage("The following option is required: [-a | --archive]");
     }
 
     @Test
@@ -99,7 +102,7 @@ class CliConfigTest {
 
         assertThatThrownBy(() -> CliConfig.parse(args))
                 .isInstanceOf(ParameterException.class)
-                .hasMessageContaining("does not exist");
+                .hasMessageStartingWith("File is not existed");
     }
 
     @Test
@@ -165,7 +168,7 @@ class CliConfigTest {
         String[] args = {"--archive", archiveFile.toString()};
         CliConfig config = CliConfig.parse(args);
 
-        assertThat(config.getArchivePath()).endsWith(".tar.gz");
+        assertThat(String.valueOf(config.getArchivePath())).endsWith(".tar.gz");
     }
 
     @Test
@@ -176,6 +179,32 @@ class CliConfigTest {
         String[] args = {"--archive", archiveFile.toString()};
         CliConfig config = CliConfig.parse(args);
 
-        assertThat(config.getArchivePath()).endsWith(".tar.xz");
+        assertThat(String.valueOf(config.getArchivePath())).endsWith(".tar.xz");
+    }
+
+    @Test
+    void testUsageHelpOutput() {
+
+        final var jc = JCommander
+                .newBuilder()
+                .addObject(new CliConfig())
+                .build();
+
+        final var sb = new StringBuilder(128);
+        jc.usage(sb);
+        final var helpOutput = sb.toString();
+
+        assertTrue(helpOutput.contains("-p, --port"));
+        assertTrue(helpOutput.contains("* -a, --archive"));
+        assertTrue(helpOutput.contains("-h, --help"));
+    }
+
+    @Test
+    void testUsageHelpCall() {
+        // This test fills `reachability-metadata.json`
+        final var config = assertDoesNotThrow(
+                () -> CliConfig.parse(new String[] {"-h"})
+        );
+        assertTrue(config.isHelp());
     }
 }
