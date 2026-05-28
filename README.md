@@ -1,86 +1,29 @@
 # Static Squash Server
 
-A lightweight web server for viewing static content from compressed archives without prior extraction.
+A lightweight web server for viewing static content from compressed archives without full extraction.
 
 ## Highlights
 
 * AI-generated project;
 * Alpha status.
 
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Problem Statement](#problem-statement)
-- [Solution](#solution)
-- [Technology Stack](#technology-stack)
-- [Build Instructions](#build-instructions)
-- [Usage](#usage)
-- [AI-Assisted Development](#ai-assisted-development)
-- [License](#license)
-- [Acknowledgements](#acknowledgements)
-
----
-
 ## Overview
 
-Static Squash Server is a minimal HTTP server designed to serve files directly from compressed archives (`.tar.gz`, `.zip`, `.tar.xz`) without extracting them to disk. The project is optimised for scenarios where archive sizes are large and disk space or I/O performance is constrained.
+In modern CI/CD pipelines, test reports (particularly Allure reports) are often archived to save storage space. When dealing with large test suites, these archives can become substantial. Viewing such reports typically requires full extraction, which can be resource-intensive—especially on constrained environments like VDI with limited resources.
 
----
+Static Squash Server addresses this challenge by allowing you to browse and serve files directly from compressed archives without extracting them to disk.
 
-## Problem Statement
+## Features
 
-In modern CI/CD pipelines, automated test reports (particularly Allure reports) are often archived to conserve storage and meet artifact size limits. When reviewing these reports, users typically face the following challenges:
+- **No extraction required** — Files are streamed directly from the archive;
+- **Supports multiple formats** — ZIP, TAR.GZ, TAR.XZ;
+- **Lightweight** — Built with Helidon SE for minimal resource consumption;
+- **Native Image support** — Compile to a native binary with GraalVM;
+- **Asynchronous processing** — Non-blocking HTTP server with request queuing;
+- **Proper MIME types** — Automatic Content-Type detection by file extension;
+- **CLI configuration** — Simple command-line interface for server setup.
 
-- Large archive files require significant time and resources to extract.
-- Resource-constrained environments (e.g., restricted VDI sessions) may lack sufficient disk space or processing power.
-- Extracting an entire archive just to view a single file is inefficient and wasteful.
-
----
-
-## Solution
-
-Static Squash Server addresses these issues by:
-
-- Serving files directly from compressed archives via HTTP.
-- Streaming file contents on demand without full extraction.
-- Preserving archive directory structure in URL paths.
-- Supporting concurrent requests with internal queue management.
-- Operating with minimal memory footprint using lazy evaluation and streaming I/O.
-
-This approach enables efficient report viewing even on systems with limited resources.
-
----
-
-## Technology Stack
-
-| Component | Technology |
-|-----------|------------|
-| Language | Java 25 |
-| Web Framework | Helidon SE 4.4.1 |
-| Archive Handling | Apache Commons Compress 1.28.0 |
-| CLI Parsing | JCommander 3.0 |
-| Build Tool | Apache Maven |
-| Native Compilation | GraalVM Native Image |
-| Testing | JUnit 5, AssertJ, Allure |
-
-### Key Features
-
-- **Asynchronous I/O**: Non-blocking request handling with Helidon.
-- **Streaming**: Files are streamed directly from archives without temporary extraction.
-- **Native Support**: Compiled binaries via GraalVM for reduced startup time and memory usage.
-- **Content-Type Detection**: Automatic HTTP `Content-Type` header based on file extension.
-
----
-
-## Build Instructions
-
-### Prerequisites
-
-- Java 25 (or compatible JDK)
-- Apache Maven 3.9+
-- GraalVM (for native image builds)
+## Build Commands
 
 ### Standard JAR Build
 
@@ -88,90 +31,93 @@ This approach enables efficient report viewing even on systems with limited reso
 mvn clean package
 ```
 
-Output: `target/StaticSquashServer.jar`
+Produces: `target/StaticSquashServer.jar`
 
-### Native Image Build
+### Native Image Build (GraalVM)
 
 ```bash
 mvn -P native-image clean package
 ```
 
-Output: Native executable in `target/`
-
----
+Produces: A native executable binary
 
 ## Usage
 
-### Running from JAR
-
 ```bash
+# Run with JAR
 java -jar target/StaticSquashServer.jar --port 8080 --archive path/to/archive.tar.gz
-```
 
-### Running Native Binary
-
-```bash
-./target/staticsquashserver --port 8080 --archive path/to/archive.tar.gz
+# Run with native binary
+./static-squash-server --port 8080 --archive path/to/archive.tar.gz
 ```
 
 ### Command-Line Parameters
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `--port` | HTTP server port | `8080` |
-| `--archive` | Path to archive file (`.zip`, `.tar.gz`, `.tar.xz`) | Required |
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--port` | 8080 | Server port |
+| `--archive` | (required) | Path to the archive file |
 
-### Example
+### Supported Archive Formats
+
+- `.zip`;
+- `.tar.gz` (`.tgz`);
+- `.tar.xz`.
+
+## Project Background
+
+This project was generated with assistance from neural networks:
+
+- **Primary generation**: [Qwen3.5-122B](https://huggingface.co/unsloth/Qwen3.5-122B-A10B-GGUF);
+- **Inference Engine**: [llama.cpp](https://github.com/ggml-org/llama.cpp);
+- **Orchestration Tool**: [opencode](https://github.com/anomalyco/opencode);
+- **Additional assistance**: Google AI Mode.
+
+All prompts used during development are available in the `ai/` directory for transparency and reproducibility.
+
+## Architecture Highlights
+
+- **Stream-based processing** — Large files are handled via streams without loading entirely into memory;
+- **Lazy evaluation** — Computations are deferred until necessary;
+- **Immutable objects** — Used throughout where memory copying is not impacted;
+- **Request queuing** — Duplicate requests are merged into a single processing queue;
+- **Non-blocking archive traversal** — Archive scanning does not block the HTTP server.
+
+## Testing
 
 ```bash
-java -jar target/StaticSquashServer.jar --archive allure-results.tar.gz
+# Run tests
+mvn test
+
+# Generate Allure report
+mvn allure:report
 ```
 
-Once started, navigate to `http://localhost:8080/index.html` (or any file within the archive).
-
----
-
-## AI-Assisted Development
-
-This project was developed with significant assistance from artificial intelligence:
-
-- **AI Model**: Qwen3.5-122B
-- **Inference Engine**: `llama.cpp`
-- **Orchestration Tool**: [opencode](https://github.com/anomalyco/opencode)
-
-All AI prompts and task specifications are preserved in the [`ai`](ai/) directory for full transparency and reproducibility. Manual code reviews and adjustments were performed throughout the development process.
-
----
-
-## Licensing
+## License
 
 This project is open-source and uses a combined licensing model:
 
 * **Software Code**: All Java source code and build scripts are licensed under the [GNU Affero General Public License v3.0 (AGPL-3.0)](./LICENSE);
 * **Prompts and Data**: All AI prompts, instructions, and datasets located in the `/ai` directory are licensed under the [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](./LICENSE-PROMPTS).
 
----
+## Contributing
+
+As this is a young project, the architecture may evolve. Please review the code and task descriptions in the `ai/` directory to understand the development context.
 
 ## Acknowledgements
 
-- **Alibaba Cloud** — for developing and open-sourcing the Qwen series of large language models.
-- **Helidon Team** — for the excellent Java microservices framework.
-- **Apache Software Foundation** — for Commons Compress and other foundational libraries.
-
----
+- **Alibaba Cloud** — for developing and open-sourcing the Qwen series of large language models;
+- **Unsloth Team** — for Unsloth Dynamic 2.0 Quants;
+- **Helidon Team** — for the excellent Java microservices framework;
+- **Apache Software Foundation** — for Commons Compress and other foundational libraries;
+- **Google** for Google AI Mode.
 
 ## Skills sources
 
 - [context7 and java-engineer](https://github.com/JetBrains/junie-extensions);
 - [java-patterns](https://github.com/projectious-work/processkit/tree/main/src/context/skills/engineering/java-patterns);
-- [api-design, architecture-decision-records, iterative-retrieval, java-coding-standards, search-first, strategic-compact, tdd-workflow, verification-loop](.opencode/skills/verification-loop)](.opencode/skills/tdd-workflow)](.opencode/skills/strategic-compact)](.opencode/skills/search-first)](.opencode/skills/java-coding-standards)](.opencode/skills/iterative-retrieval)](.opencode/skills/architecture-decision-records)](https://github.com/RogerioSobrinho/codeme-copilot/);
-- [junit](https://github.com/partme-ai/full-stack-skills/tree/main/skills/testing-skills/junit)
-
----
-
-## Contributing
-
-As this is a young and evolving project, contributions and feedback are welcome. Please ensure that any changes align with the project's core principles: simplicity, efficiency, and minimal resource consumption.
+- [api-design, architecture-decision-records, iterative-retrieval, java-coding-standards, search-first, strategic-compact, tdd-workflow, verification-loop](https://github.com/RogerioSobrinho/codeme-copilot/);
+- [junit](https://github.com/partme-ai/full-stack-skills/tree/main/skills/testing-skills/junit).
 
 ---
 
