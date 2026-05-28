@@ -21,17 +21,19 @@ package ru.devaarno.staticsquashserver.cli;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class CliConfig {
-    @Parameter(names = {"-p", "--port"}, description = "Server port (default: 8080)", order = 1)
+
+    @Parameter(names = {"-h", "--help"}, help = true, description = "Show a help")
+    private boolean help;
+
+    @Parameter(names = {"-p", "--port"}, description = "Server port (default: 8080)", order = 1, validateValueWith = PortValidator.class)
     private int port = 8080;
 
-    @Parameter(names = {"-a", "--archive"}, description = "Path to archive file", order = 2)
-    private String archivePath;
+    @Parameter(names = {"-a", "--archive"}, description = "Path to archive file", order = 2, validateValueWith = ArchiveValidator.class, required = true)
+    private Path archivePath;
 
     public CliConfig() {
     }
@@ -40,27 +42,12 @@ public final class CliConfig {
         return port;
     }
 
-    public String getArchivePath() {
+    public Path getArchivePath() {
         return archivePath;
     }
 
-    private void validate() {
-        if (archivePath == null || archivePath.isEmpty()) {
-            throw new ParameterException("Archive path is required. Use --archive or -a");
-        }
-
-        final var path = Path.of(archivePath);
-        if (!Files.exists(path)) {
-            throw new ParameterException("Archive file does not exist: " + archivePath);
-        }
-
-        if (!Files.isReadable(path)) {
-            throw new ParameterException("Archive file is not readable: " + archivePath);
-        }
-
-        if (port < 1 || port > 65535) {
-            throw new ParameterException("Port must be between 1 and 65535: " + port);
-        }
+    public boolean isHelp() {
+        return help;
     }
 
     public static CliConfig parse(final String[] args) {
@@ -70,7 +57,10 @@ public final class CliConfig {
                 .addObject(config)
                 .build();
         jc.parse(args);
-        config.validate();
+
+        if (config.isHelp()) {
+            jc.usage();
+        }
         return config;
     }
 }

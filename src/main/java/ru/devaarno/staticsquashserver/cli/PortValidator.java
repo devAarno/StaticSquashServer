@@ -17,30 +17,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.devaarno.staticsquashserver;
+package ru.devaarno.staticsquashserver.cli;
 
-import io.helidon.logging.common.LogConfig;
-import ru.devaarno.staticsquashserver.cli.CliConfig;
-import ru.devaarno.staticsquashserver.server.ArchiveWebServer;
+import com.beust.jcommander.IValueValidator;
+import com.beust.jcommander.ParameterException;
 
-public final class Main {
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-    static void main(final String[] args) {
+public final class PortValidator implements IValueValidator<Integer> {
 
-        // load logging configuration
-        LogConfig.configureRuntime();
+    private static final Logger LOGGER = Logger.getLogger(PortValidator.class.getName());
 
-        final var config = CliConfig.parse(args);
-
-        if (config.isHelp()) {
-            return;
+    @Override
+    public void validate(final String name, final Integer value) throws ParameterException {
+        if (value < 1 || value > 65535) {
+            LOGGER.log(Level.SEVERE, "Port must be between 1 and 65535: {0}", value);
+            throw new ParameterException("Port must be between 1 and 65535");
         }
-
-        final var server = new ArchiveWebServer(config);
-        server.start();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
-
-        server.awaitShutdown();
     }
 }
