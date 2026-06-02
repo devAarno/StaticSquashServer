@@ -78,6 +78,8 @@ public final class ArchiveWebServer {
     private Handler createHandler(final ArchiveEntryInfo entryInfo) {
         return (final ServerRequest request, final ServerResponse response) -> {
             LOGGER.log(Level.INFO, "Request: {0}", entryInfo.path());
+
+            // Blocking CompletableFuture::get() is OK here because a data sending is delegated to the ContentProvider
             contentProvider.fillOutput(request, response, entryInfo).get(5, TimeUnit.MINUTES);
             /*try {
                 resp.headers().contentLength(entryInfo.size());
