@@ -36,6 +36,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -51,12 +52,14 @@ public class ContentProvider {
     private final ArchiveDescriptor archiveDescriptor;
     private final ArrayBlockingQueue<RequestResponseTask> queue = new ArrayBlockingQueue<>(2000);
     private final AtomicBoolean isScanStarted = new AtomicBoolean(false);
+    private final ReentrantLock scanLock = new ReentrantLock();
 
     public ContentProvider(final Path archivePath) {
         this.archiveParser = ArchiveParserFactory.create(archivePath);
         this.archiveDescriptor = archiveParser.initScan();
     }
 
+    // This method works at Helidon virtual thread.
     public CompletableFuture<Boolean> fillOutput(final ServerRequest request, final ServerResponse response, final ArchiveEntryInfo archiveEntryInfo) {
         final var ret = new CompletableFuture<Boolean>();
 
@@ -66,7 +69,7 @@ public class ContentProvider {
             } else {
                 response.status(SERVICE_UNAVAILABLE_503);
                 response.send("Service temporarily unavailable.");
-                ret.complete(true);
+                ret.complete(false);
                 LOGGER.log(Level.WARNING, "Server is overloaded.");
                 return ret;
             }
@@ -86,66 +89,77 @@ public class ContentProvider {
     }
 
     private void tryStartScan() {
-        if (isScanStarted.compareAndSet(false, true)) {
-            LOGGER.log(Level.INFO, "Archive scan loop has been started.");
-            Thread.ofPlatform().name("scan-thread").start(this::scan);
+        if (isScanStarted.get()) {
+            return;
         }
 
+        if (scanLock.tryLock()) {
+            try {
+                if (isScanStarted.compareAndSet(false, true)) {
+                    LOGGER.log(Level.INFO, "Archive scan loop has been started.");
+                    Thread.ofPlatform().name("scan-thread").start(this::scan);
+                }
+            } finally {
+                scanLock.unlock();
+            }
+        }
     }
 
+    // This method works at real system thread.
     private void scan() {
         final var tenured = new ArrayList<RequestResponseTask>();
-        while (!(isScanStarted.compareAndSet(queue.isEmpty(), false))) {
-            final var plan = new ArrayList<RequestResponseTask>(queue.size());
-            queue.drainTo(plan);
+        try {
+            while (!Thread.interrupted() && !(isScanStarted.compareAndSet(queue.isEmpty(), false))) {
+                final var plan = new ArrayList<RequestResponseTask>();
+                queue.drainTo(plan);
 
-            LOGGER.log(Level.INFO, "The scan plan contains {0} entities.", plan.size());
-            try {
-                archiveParser.forEachEntry((final String s, final InputStream inputStream) -> {
-                    for (final var planItem : plan) {
-                        if (planItem.archiveEntryInfo().path().equals(s)) {
-                            planItem.response().headers().contentLength(planItem.archiveEntryInfo().size());
-                            planItem.response().headers().set(HeaderNames.CONTENT_TYPE, planItem.archiveEntryInfo().mediaType().text());
-                            try {
-                                inputStream.transferTo(planItem.response().outputStream());
-                            } catch (final IOException e) {
-                                planItem.response().headers().set(HeaderNames.CONTENT_TYPE, 0);
-                                planItem.response().status(INTERNAL_SERVER_ERROR_500);
-                                LOGGER.log(Level.SEVERE, "Unable to transfer a data.", e);
+                LOGGER.log(Level.INFO, "The scan plan contains {0} entities.", plan.size());
+                try {
+                    archiveParser.forEachEntry((final String s, final InputStream inputStream) -> {
+                        for (final var planItem : plan) {
+                            if (planItem.archiveEntryInfo().path().equals(s)) {
+                                planItem.response().headers().contentLength(planItem.archiveEntryInfo().size());
+                                planItem.response().headers().set(HeaderNames.CONTENT_TYPE, planItem.archiveEntryInfo().mediaType().text());
+                                try {
+                                    inputStream.transferTo(planItem.response().outputStream());
+                                } catch (final IOException e) {
+                                    planItem.response().headers().set(HeaderNames.CONTENT_TYPE, 0);
+                                    planItem.response().status(INTERNAL_SERVER_ERROR_500);
+                                    LOGGER.log(Level.SEVERE, "Unable to transfer a data.", e);
+                                }
+                                planItem.isDone().complete(true);
+                                LOGGER.log(Level.INFO, "Done: {0}", planItem.archiveEntryInfo().path());
                             }
-                            planItem.isDone().complete(true);
-                            LOGGER.log(Level.INFO, "Done: {0}", planItem.archiveEntryInfo().path());
                         }
-                    }
-                });
-            } catch (final IOException e) {
-                LOGGER.log(Level.SEVERE, "Archive is corrupted", e);
-                queue.forEach(
-                        (final RequestResponseTask it) -> {
-                            it.response().status(INTERNAL_SERVER_ERROR_500);
-                            it.isDone().complete(true);
-                        });
-                queue.clear();
-                return;
-            }
+                    });
+                } catch (final IOException e) {
+                    LOGGER.log(Level.SEVERE, "Archive is corrupted", e);
+                    queue.forEach(
+                            (final RequestResponseTask it) -> {
+                                it.response().status(INTERNAL_SERVER_ERROR_500);
+                                it.isDone().complete(true);
+                            });
+                    queue.clear();
+                    return;
+                }
 
-            final var partitioned = plan
-                    .stream()
-                    .collect(
-                            Collectors.partitioningBy(
-                                    it -> it.isDone().isDone(),
-                                    Collectors.toList()
-                            )
-                    );
+                final var partitioned = plan
+                        .stream()
+                        .collect(
+                                Collectors.partitioningBy(
+                                        it -> it.isDone().isDone(),
+                                        Collectors.toList()
+                                )
+                        );
 
-            final var done = partitioned.get(true);
-            final var undone = partitioned.get(false);
+                final var done = partitioned.get(true);
+                final var undone = partitioned.get(false);
 
-            tenured.removeAll(done);
+                tenured.removeAll(done);
 
-            // This is means, that full scan loop unable to find a file.
-            // Actually, this case is never expected due to a route-per-file concept at ArchiveWebServer::setupRouting.
-            undone
+                // This is means, that full scan loop unable to find a file.
+                // Actually, this case is never expected due to a route-per-file concept at ArchiveWebServer::setupRouting.
+                undone
                     .stream()
                     .filter(tenured::contains)
                     .forEach(
@@ -156,17 +170,23 @@ public class ContentProvider {
                             }
                     );
 
-            // We forget about stucked undone tasks
-            undone.removeAll(tenured);
+                // We forget about stucked undone tasks
+                undone.removeAll(tenured);
 
-            // We add to tenured collection the final undone task collection.
-            // It covers a case when loop is at the end of arhive but a file is required from its start.
-            tenured.addAll(undone);
+                // We add to tenured collection the final undone task collection.
+                // It covers a case when loop is at the end of arhive but a file is required from its start.
+                tenured.addAll(undone);
 
-            queue.removeAll(done);
-
+                queue.removeAll(done);
+            }
+        } finally {
+            scanLock.lock();
+            try {
+                isScanStarted.set(false);
+            } finally {
+                scanLock.unlock();
+            }
+            LOGGER.log(Level.INFO, "Archive scan loop has been finished.");
         }
-        isScanStarted.set(false);
-        LOGGER.log(Level.INFO, "Archive scan loop has been finished.");
     }
 }

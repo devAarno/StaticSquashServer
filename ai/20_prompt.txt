@@ -1,0 +1,15 @@
+# Copyright (C) 2026 Parkhomenko Stanislav
+# This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+# To view a copy of this license, visit http://creativecommons.org
+
+На ревью @src/main/java/ru/devaarno/staticsquashserver/contentprovider/ContentProvider.java было получено замечание:
+```
+Отсутствие обработки прерывания потока (строка 75)
+
+Thread.ofPlatform().name("scan-thread").start(this::scan);
+
+Проблема: Поток сканирования не проверяет Thread.interrupted(). При остановке приложения поток может зависнуть.
+
+Решение: Добавить проверку прерывания в цикл while.
+```
+Дай подробное объяснение проблемы и предложи решение.  force use context7, mcp, skills
