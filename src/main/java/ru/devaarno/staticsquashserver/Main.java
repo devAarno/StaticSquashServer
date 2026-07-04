@@ -23,12 +23,29 @@ import io.helidon.logging.common.LogConfig;
 import ru.devaarno.staticsquashserver.cli.CliConfig;
 import ru.devaarno.staticsquashserver.server.ArchiveWebServer;
 
+import java.util.logging.Logger;
+
 public final class Main {
+
+    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     static void main(final String[] args) {
 
         // load logging configuration
         LogConfig.configureRuntime();
+
+        LOGGER.info("");
+        LOGGER.info(".------.");
+        LOGGER.info("|STATIC|");
+        LOGGER.info("|SQUASH|");
+        LOGGER.info("|SERVER|");
+        LOGGER.info("'------'");
+        LOGGER.info("");
+        LOGGER.info("Built with care for efficient archive inspection.");
+        LOGGER.info("");
+        LOGGER.info("Licensed under AGPL v3 & CC BY-SA 4.0.");
+        LOGGER.info("Distributed \"AS IS\" WITHOUT WARRANTY OF ANY KIND.");
+        LOGGER.info("");
 
         final var config = CliConfig.parse(args);
 
