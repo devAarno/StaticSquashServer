@@ -22,6 +22,8 @@ package ru.devaarno.staticsquashserver.cli;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
@@ -106,6 +108,7 @@ class CliConfigTest {
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS)
     void testArchiveFileMustBeReadable(@TempDir Path tempDir) throws IOException {
         Path archiveFile = tempDir.resolve("archive.zip");
         Files.createFile(archiveFile);
