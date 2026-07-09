@@ -22,33 +22,11 @@ package ru.devaarno.staticsquashserver.mime;
 import io.helidon.common.media.type.MediaType;
 import io.helidon.common.media.type.MediaTypes;
 
-import java.util.Map;
-
 /**
  * Resolves MIME types based on file extensions.
  * Optimized for Allure report files (HTML, JSON, JS, CSS).
  */
 public final class MimeTypeResolver {
-    
-    private static final Map<String, MediaType> EXTENSION_TO_TYPE = Map.ofEntries(
-        Map.entry("html", MediaTypes.TEXT_HTML),
-        Map.entry("htm", MediaTypes.TEXT_HTML),
-        Map.entry("css", MediaTypes.create("text/css")),
-        Map.entry("js", MediaTypes.create("text/javascript")),
-        Map.entry("json", MediaTypes.APPLICATION_JSON),
-        Map.entry("png", MediaTypes.create("image/png")),
-        Map.entry("jpg", MediaTypes.create("image/jpeg")),
-        Map.entry("jpeg", MediaTypes.create("image/jpeg")),
-        Map.entry("gif", MediaTypes.create("image/gif")),
-        Map.entry("svg", MediaTypes.create("image/svg+xml")),
-        Map.entry("txt", MediaTypes.TEXT_PLAIN),
-        Map.entry("xml", MediaTypes.APPLICATION_XML),
-        Map.entry("ico", MediaTypes.create("image/x-icon")),
-        Map.entry("woff", MediaTypes.create("font/woff")),
-        Map.entry("woff2", MediaTypes.create("font/woff2")),
-        Map.entry("ttf", MediaTypes.create("font/ttf")),
-        Map.entry("eot", MediaTypes.create("application/vnd.ms-fontobject"))
-    );
     
     private MimeTypeResolver() {
     }
@@ -60,6 +38,23 @@ public final class MimeTypeResolver {
         }
         
         final var ext = fileName.substring(lastDot + 1).toLowerCase();
-        return EXTENSION_TO_TYPE.getOrDefault(ext, MediaTypes.APPLICATION_OCTET_STREAM);
+        return switch (ext) {
+            case "html", "htm" -> MediaTypes.TEXT_HTML;
+            case "css" -> MediaTypes.create("text/css");
+            case "js" -> MediaTypes.create("text/javascript");
+            case "json" -> MediaTypes.APPLICATION_JSON;
+            case "png" -> MediaTypes.create("image/png");
+            case "jpg", "jpeg" -> MediaTypes.create("image/jpeg");
+            case "gif" -> MediaTypes.create("image/gif");
+            case "svg" -> MediaTypes.create("image/svg+xml");
+            case "txt" -> MediaTypes.TEXT_PLAIN;
+            case "xml" -> MediaTypes.APPLICATION_XML;
+            case "ico" -> MediaTypes.create("image/x-icon");
+            case "woff" -> MediaTypes.create("font/woff");
+            case "woff2" -> MediaTypes.create("font/woff2");
+            case "ttf" -> MediaTypes.create("font/ttf");
+            case "eot" -> MediaTypes.create("application/vnd.ms-fontobject");
+            default -> MediaTypes.APPLICATION_OCTET_STREAM;
+        };
     }
 }
