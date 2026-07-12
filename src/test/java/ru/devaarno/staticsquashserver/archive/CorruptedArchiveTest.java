@@ -26,8 +26,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for Stage 8: Corrupted Archive Handling.
@@ -45,9 +46,10 @@ class CorruptedArchiveTest {
         
         ArchiveParser parser = ArchiveParserFactory.create(corruptedZip);
         
-        assertThatThrownBy(() -> parser.initScan())
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to parse");
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> parser.initScan(),
+                "Should throw RuntimeException for corrupted ZIP");
+        assertTrue(exception.getMessage().contains("Failed to parse"),
+                "Exception message should contain 'Failed to parse' for corrupted ZIP");
     }
 
     @Test
@@ -57,8 +59,8 @@ class CorruptedArchiveTest {
         
         ArchiveParser parser = ArchiveParserFactory.create(emptyFile);
         
-        assertThatThrownBy(() -> parser.initScan())
-                .isInstanceOf(RuntimeException.class);
+        assertThrows(RuntimeException.class, () -> parser.initScan(),
+                "Should throw RuntimeException for empty file as ZIP");
     }
 
     @Test
@@ -72,8 +74,8 @@ class CorruptedArchiveTest {
         
         ArchiveParser parser = ArchiveParserFactory.create(truncatedZip);
         
-        assertThatThrownBy(() -> parser.initScan())
-                .isInstanceOf(RuntimeException.class);
+        assertThrows(RuntimeException.class, () -> parser.initScan(),
+                "Should throw RuntimeException for truncated ZIP");
     }
 
     @Test
@@ -83,9 +85,10 @@ class CorruptedArchiveTest {
         
         ArchiveParser parser = ArchiveParserFactory.create(corruptedTarGz);
         
-        assertThatThrownBy(() -> parser.initScan())
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to parse");
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> parser.initScan(),
+                "Should throw RuntimeException for corrupted TAR.GZ");
+        assertTrue(exception.getMessage().contains("Failed to parse"),
+                "Exception message should contain 'Failed to parse' for corrupted TAR.GZ");
     }
 
     @Test
@@ -95,9 +98,10 @@ class CorruptedArchiveTest {
         
         ArchiveParser parser = ArchiveParserFactory.create(corruptedTarXz);
         
-        assertThatThrownBy(() -> parser.initScan())
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to parse");
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> parser.initScan(),
+                "Should throw RuntimeException for corrupted TAR.XZ");
+        assertTrue(exception.getMessage().contains("Failed to parse"),
+                "Exception message should contain 'Failed to parse' for corrupted TAR.XZ");
     }
 
     @Test
@@ -106,8 +110,8 @@ class CorruptedArchiveTest {
         
         ArchiveParser parser = ArchiveParserFactory.create(nonExistent);
         
-        assertThatThrownBy(() -> parser.initScan())
-                .isInstanceOf(RuntimeException.class);
+        assertThrows(RuntimeException.class, () -> parser.initScan(),
+                "Should throw RuntimeException for non-existent archive");
     }
 
     @Test
@@ -123,8 +127,8 @@ class CorruptedArchiveTest {
         ArchiveParser parser = ArchiveParserFactory.create(validZip);
         ArchiveDescriptor descriptor = parser.initScan();
         
-        assertThat(descriptor.entries()).hasSize(1);
-        assertThat(descriptor.entries().get(0).path()).isEqualTo("test.txt");
+        assertEquals(1, descriptor.entries().size(), "Should have exactly 1 entry in valid ZIP");
+        assertEquals("test.txt", descriptor.entries().get(0).path(), "Entry path should be 'test.txt'");
     }
 
     @Test
@@ -141,6 +145,7 @@ class CorruptedArchiveTest {
         ArchiveParser parser = ArchiveParserFactory.create(zipWithDirs);
         ArchiveDescriptor descriptor = parser.initScan();
         
-        assertThat(descriptor.entries()).isEmpty();
+        assertTrue(descriptor.entries().isEmpty(),
+                "Should have no file entries when archive contains only directories");
     }
 }

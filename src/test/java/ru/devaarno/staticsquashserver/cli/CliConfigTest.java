@@ -30,159 +30,193 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CliConfigTest {
 
     @Test
-    void testDefaultPort(@TempDir Path tempDir) throws IOException {
-        Path archiveFile = tempDir.resolve("test.zip");
+    void testDefaultPort(final @TempDir Path tempDir) throws IOException {
+        final var archiveFile = tempDir.resolve("test.zip");
         Files.createFile(archiveFile);
-        String[] args = {"--archive", archiveFile.toString()};
-        CliConfig config = CliConfig.parse(args);
 
-        assertThat(config.getPort()).isEqualTo(8080);
+        String[] args = {"--archive", archiveFile.toString()};
+        final var config = CliConfig.parse(args);
+
+        assertEquals(8080, config.getPort(), "Default port should be 8080");
     }
 
     @Test
-    void testCustomPort(@TempDir Path tempDir) throws IOException {
-        Path archiveFile = tempDir.resolve("test.zip");
+    void testCustomPort(final @TempDir Path tempDir) throws IOException {
+        final var archiveFile = tempDir.resolve("test.zip");
         Files.createFile(archiveFile);
+
         String[] args = {"--port", "9090", "--archive", archiveFile.toString()};
-        CliConfig config = CliConfig.parse(args);
+        final var config = CliConfig.parse(args);
 
-        assertThat(config.getPort()).isEqualTo(9090);
+        assertEquals(9090, config.getPort(), "Custom port should be 9090");
     }
 
     @Test
-    void testShortPortOption(@TempDir Path tempDir) throws IOException {
-        Path archiveFile = tempDir.resolve("test.zip");
+    void testShortPortOption(final @TempDir Path tempDir) throws IOException {
+        final var archiveFile = tempDir.resolve("test.zip");
         Files.createFile(archiveFile);
+
         String[] args = {"-p", "8888", "-a", archiveFile.toString()};
-        CliConfig config = CliConfig.parse(args);
+        final var config = CliConfig.parse(args);
 
-        assertThat(config.getPort()).isEqualTo(8888);
-        assertThat(config.getArchivePath()).isEqualTo(archiveFile);
+        assertEquals(8888, config.getPort(), "Short port option should be 8888");
+        assertEquals(archiveFile, config.getArchivePath(), "Archive path should match");
     }
 
     @Test
-    void testArchivePath(@TempDir Path tempDir) throws IOException {
-        Path archiveFile = tempDir.resolve("archive.tar.gz");
+    void testArchivePath(final @TempDir Path tempDir) throws IOException {
+        final var archiveFile = tempDir.resolve("archive.tar.gz");
         Files.createFile(archiveFile);
-        String[] args = {"--archive", archiveFile.toString()};
-        CliConfig config = CliConfig.parse(args);
 
-        assertThat(config.getArchivePath()).isEqualTo(archiveFile);
+        String[] args = {"--archive", archiveFile.toString()};
+        final var config = CliConfig.parse(args);
+
+        assertEquals(archiveFile, config.getArchivePath(), "Archive path should match");
     }
 
     @Test
-    void testMissingArchivePath(@TempDir Path tempDir) throws IOException {
-        Path archiveFile = tempDir.resolve("archive.zip");
+    void testMissingArchivePath(final @TempDir Path tempDir) throws IOException {
+        final var archiveFile = tempDir.resolve("archive.zip");
         Files.createFile(archiveFile);
 
         String[] args = {"--archive", archiveFile.toString()};
-        CliConfig config = CliConfig.parse(args);
+        final var config = CliConfig.parse(args);
 
-        assertThat(config.getArchivePath()).isEqualTo(archiveFile);
+        assertEquals(archiveFile, config.getArchivePath(), "Archive path should match");
     }
 
     @Test
     void testArchivePathRequired() {
         String[] args = {"--port", "8080"};
 
-        assertThatThrownBy(() -> CliConfig.parse(args))
-                .isInstanceOf(ParameterException.class)
-                .hasMessage("The following option is required: [-a | --archive]");
+        final var exception = assertThrows(
+                ParameterException.class,
+                () -> CliConfig.parse(args),
+                "Should throw ParameterException when archive path is missing"
+        );
+        assertEquals("The following option is required: [-a | --archive]", exception.getMessage());
     }
 
     @Test
-    void testArchiveFileMustExist(@TempDir Path tempDir) {
+    void testArchiveFileMustExist() {
         String[] args = {"--archive", "/nonexistent/path/archive.zip"};
 
-        assertThatThrownBy(() -> CliConfig.parse(args))
-                .isInstanceOf(ParameterException.class)
-                .hasMessageStartingWith("File is not existed");
+        final var exception = assertThrows(
+                ParameterException.class,
+                () -> CliConfig.parse(args),
+                "Should throw ParameterException when file does not exist"
+        );
+        assertTrue(
+                exception.getMessage().startsWith("File is not existed"),
+                "Exception message should start with 'File is not existed'"
+        );
     }
 
     @Test
     @DisabledOnOs(OS.WINDOWS)
-    void testArchiveFileMustBeReadable(@TempDir Path tempDir) throws IOException {
-        Path archiveFile = tempDir.resolve("archive.zip");
+    void testArchiveFileMustBeReadable(final @TempDir Path tempDir) throws IOException {
+        final var archiveFile = tempDir.resolve("archive.zip");
         Files.createFile(archiveFile);
         Files.setPosixFilePermissions(archiveFile, java.nio.file.attribute.PosixFilePermissions.fromString("---------"));
 
         String[] args = {"--archive", archiveFile.toString()};
 
-        assertThatThrownBy(() -> CliConfig.parse(args))
-                .isInstanceOf(ParameterException.class)
-                .hasMessageContaining("not readable");
+        final var exception = assertThrows(
+                ParameterException.class,
+                () -> CliConfig.parse(args),
+                "Should throw ParameterException when file is not readable"
+        );
+        assertTrue(
+                exception.getMessage().contains("not readable"),
+                "Exception message should contain 'not readable'"
+        );
     }
 
     @Test
-    void testPortOutOfRangeLow(@TempDir Path tempDir) throws IOException {
-        Path archiveFile = tempDir.resolve("test.zip");
+    void testPortOutOfRangeLow(final @TempDir Path tempDir) throws IOException {
+        final var archiveFile = tempDir.resolve("test.zip");
         Files.createFile(archiveFile);
+
         String[] args = {"--port", "0", "--archive", archiveFile.toString()};
 
-        assertThatThrownBy(() -> CliConfig.parse(args))
-                .isInstanceOf(ParameterException.class)
-                .hasMessageContaining("Port must be between");
+        final var exception = assertThrows(ParameterException.class, () -> CliConfig.parse(args),
+                "Should throw ParameterException when port is too low");
+        assertTrue(
+                exception.getMessage().contains("Port must be between"),
+                "Exception message should contain 'Port must be between'"
+        );
     }
 
     @Test
-    void testPortOutOfRangeHigh(@TempDir Path tempDir) throws IOException {
-        Path archiveFile = tempDir.resolve("test.zip");
+    void testPortOutOfRangeHigh(final @TempDir Path tempDir) throws IOException {
+        final var archiveFile = tempDir.resolve("test.zip");
         Files.createFile(archiveFile);
         String[] args = {"--port", "65536", "--archive", archiveFile.toString()};
 
-        assertThatThrownBy(() -> CliConfig.parse(args))
-                .isInstanceOf(ParameterException.class)
-                .hasMessageContaining("Port must be between");
+        final var exception = assertThrows(ParameterException.class, () -> CliConfig.parse(args),
+                "Should throw ParameterException when port is too high");
+        assertTrue(
+                exception.getMessage().contains("Port must be between"),
+                "Exception message should contain 'Port must be between'"
+        );
     }
 
     @Test
-    void testValidPortBoundaryMin(@TempDir Path tempDir) throws IOException {
-        Path archiveFile = tempDir.resolve("test.zip");
+    void testValidPortBoundaryMin(final @TempDir Path tempDir) throws IOException {
+        final var archiveFile = tempDir.resolve("test.zip");
         Files.createFile(archiveFile);
+
         String[] args = {"--port", "1", "--archive", archiveFile.toString()};
-        CliConfig config = CliConfig.parse(args);
 
-        assertThat(config.getPort()).isEqualTo(1);
+        final var config = CliConfig.parse(args);
+        assertEquals(1, config.getPort(), "Minimum valid port should be 1");
     }
 
     @Test
-    void testValidPortBoundaryMax(@TempDir Path tempDir) throws IOException {
-        Path archiveFile = tempDir.resolve("test.zip");
+    void testValidPortBoundaryMax(final @TempDir Path tempDir) throws IOException {
+        final var archiveFile = tempDir.resolve("test.zip");
         Files.createFile(archiveFile);
+
         String[] args = {"--port", "65535", "--archive", archiveFile.toString()};
-        CliConfig config = CliConfig.parse(args);
 
-        assertThat(config.getPort()).isEqualTo(65535);
+        final var config = CliConfig.parse(args);
+        assertEquals(65535, config.getPort(), "Maximum valid port should be 65535");
     }
 
     @Test
-    void testSupportsTarGzArchive(@TempDir Path tempDir) throws IOException {
-        Path archiveFile = tempDir.resolve("archive.tar.gz");
+    void testSupportsTarGzArchive(final @TempDir Path tempDir) throws IOException {
+        final var archiveFile = tempDir.resolve("archive.tar.gz");
         Files.createFile(archiveFile);
 
         String[] args = {"--archive", archiveFile.toString()};
-        CliConfig config = CliConfig.parse(args);
 
-        assertThat(String.valueOf(config.getArchivePath())).endsWith(".tar.gz");
+        final var config = CliConfig.parse(args);
+        assertTrue(
+                String.valueOf(config.getArchivePath()).endsWith(".tar.gz"),
+                "Archive path should end with .tar.gz"
+        );
     }
 
     @Test
-    void testSupportsXzArchive(@TempDir Path tempDir) throws IOException {
-        Path archiveFile = tempDir.resolve("archive.tar.xz");
+    void testSupportsXzArchive(final @TempDir Path tempDir) throws IOException {
+        final var archiveFile = tempDir.resolve("archive.tar.xz");
         Files.createFile(archiveFile);
 
         String[] args = {"--archive", archiveFile.toString()};
-        CliConfig config = CliConfig.parse(args);
 
-        assertThat(String.valueOf(config.getArchivePath())).endsWith(".tar.xz");
+        final var config = CliConfig.parse(args);
+        assertTrue(
+                String.valueOf(config.getArchivePath()).endsWith(".tar.xz"),
+                "Archive path should end with .tar.xz"
+        );
     }
 
     @Test
@@ -195,8 +229,8 @@ class CliConfigTest {
 
         final var sb = new StringBuilder(128);
         jc.usage(sb);
-        final var helpOutput = sb.toString();
 
+        final var helpOutput = sb.toString();
         assertTrue(helpOutput.contains("-p, --port"));
         assertTrue(helpOutput.contains("* -a, --archive"));
         assertTrue(helpOutput.contains("-h, --help"));
