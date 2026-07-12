@@ -27,7 +27,8 @@ import io.helidon.webserver.testing.junit5.ServerTest;
 import io.helidon.webserver.testing.junit5.SetUpRoute;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ServerTest
 class ArchiveWebServerTest {
@@ -57,27 +58,27 @@ class ArchiveWebServerTest {
     @Test
     void testExistingFile() {
         try (Http1ClientResponse response = client.get("/test.txt").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code(), "Response status should be 200 for /test.txt");
             String entity = response.entity().as(String.class);
-            assertThat(entity).isEqualTo("Hello World");
+            assertEquals("Hello World", entity, "Content should match for /test.txt");
         }
     }
 
     @Test
     void testNestedFile() {
         try (Http1ClientResponse response = client.get("/nested/file.json").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code(), "Response status should be 200 for /nested/file.json");
             String entity = response.entity().as(String.class);
-            assertThat(entity).isEqualTo("{\"key\":\"value\"}");
+            assertEquals("{\"key\":\"value\"}", entity, "Content should match for /nested/file.json");
         }
     }
 
     @Test
     void testNotFound() {
         try (Http1ClientResponse response = client.get("/nonexistent.txt").request()) {
-            assertThat(response.status().code()).isEqualTo(404);
+            assertEquals(404, response.status().code(), "Response status should be 404 for /nonexistent.txt");
             String entity = response.entity().as(String.class);
-            assertThat(entity).contains("Not found");
+            assertTrue(entity.contains("Not found"), "Content should contain 'Not found' for /nonexistent.txt");
         }
     }
 }

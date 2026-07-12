@@ -24,7 +24,9 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ArchiveEntryInfoTest {
 
@@ -33,19 +35,19 @@ class ArchiveEntryInfoTest {
         Instant now = Instant.now();
         ArchiveEntryInfo info = new ArchiveEntryInfo("report/index.html", 12345, MediaTypes.TEXT_HTML, now);
 
-        assertThat(info.path()).isEqualTo("report/index.html");
-        assertThat(info.size()).isEqualTo(12345);
-        assertThat(info.mediaType()).isEqualTo(MediaTypes.TEXT_HTML);
-        assertThat(info.modificationTime()).isEqualTo(now);
+        assertEquals("report/index.html", info.path(), "Path should match");
+        assertEquals(12345, info.size(), "Size should match");
+        assertEquals(MediaTypes.TEXT_HTML, info.mediaType(), "MediaType should match");
+        assertEquals(now, info.modificationTime(), "Modification time should match");
     }
 
     @Test
     void testImmutability() {
         ArchiveEntryInfo info = new ArchiveEntryInfo("test.txt", 100, MediaTypes.TEXT_PLAIN, Instant.EPOCH);
 
-        assertThat(info.path()).isNotNull();
-        assertThat(info.size()).isGreaterThan(0);
-        assertThat(info.mediaType()).isNotNull();
-        assertThat(info.modificationTime()).isNotNull();
+        assertNotNull(info.path(), "Path should not be null");
+        assertTrue(info.size() > 0, "Size should be greater than 0");
+        assertNotNull(info.mediaType(), "MediaType should not be null");
+        assertNotNull(info.modificationTime(), "Modification time should not be null");
     }
 }

@@ -27,7 +27,9 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ArchiveDescriptorTest {
 
@@ -39,10 +41,10 @@ class ArchiveDescriptorTest {
 
         ArchiveDescriptor descriptor = new ArchiveDescriptor(archivePath, ArchiveFormat.ZIP, entries);
 
-        assertThat(descriptor.archivePath()).isEqualTo(archivePath);
-        assertThat(descriptor.format()).isEqualTo(ArchiveFormat.ZIP);
-        assertThat(descriptor.entries()).hasSize(1);
-        assertThat(descriptor.entries().getFirst()).isEqualTo(entry);
+        assertEquals(archivePath, descriptor.archivePath(), "Archive path should match");
+        assertEquals(ArchiveFormat.ZIP, descriptor.format(), "Format should be ZIP");
+        assertEquals(1, descriptor.entries().size(), "Should have 1 entry");
+        assertEquals(entry, descriptor.entries().getFirst(), "First entry should match");
     }
 
     @Test
@@ -50,13 +52,13 @@ class ArchiveDescriptorTest {
         Path archivePath = tempDir.resolve("empty.tar.gz");
         ArchiveDescriptor descriptor = new ArchiveDescriptor(archivePath, ArchiveFormat.TAR_GZ, List.of());
 
-        assertThat(descriptor.entries()).isEmpty();
+        assertTrue(descriptor.entries().isEmpty(), "Entries should be empty");
     }
 
     @Test
     void testArchiveFormatValues() {
-        assertThat(ArchiveFormat.ZIP).isNotNull();
-        assertThat(ArchiveFormat.TAR_GZ).isNotNull();
-        assertThat(ArchiveFormat.TAR_XZ).isNotNull();
+        assertNotNull(ArchiveFormat.ZIP, "ZIP format should not be null");
+        assertNotNull(ArchiveFormat.TAR_GZ, "TAR_GZ format should not be null");
+        assertNotNull(ArchiveFormat.TAR_XZ, "TAR_XZ format should not be null");
     }
 }

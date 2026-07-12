@@ -29,7 +29,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for Stage 8: Error Handling and Application Termination.
@@ -77,34 +78,34 @@ class ErrorHandlingTest {
     @Test
     void testNormalRequest() {
         try (Http1ClientResponse response = client.get("/normal.txt").request()) {
-            assertThat(response.status().code()).isEqualTo(200);
+            assertEquals(200, response.status().code(), "Response status should be 200 for /normal.txt");
             String content = response.entity().as(String.class);
-            assertThat(content).isEqualTo("Normal content");
+            assertEquals("Normal content", content, "Content should match for /normal.txt");
         }
     }
 
     @Test
     void testRuntimeExceptionHandling() {
         try (Http1ClientResponse response = client.get("/error-simulated").request()) {
-            assertThat(response.status().code()).isEqualTo(500);
+            assertEquals(500, response.status().code(), "Response status should be 500 for /error-simulated");
             String content = response.entity().as(String.class);
-            assertThat(content).contains("Error");
+            assertTrue(content.contains("Error"), "Content should contain 'Error' for /error-simulated");
         }
     }
 
     @Test
     void testIOExceptionHandling() {
         try (Http1ClientResponse response = client.get("/io-error").request()) {
-            assertThat(response.status().code()).isEqualTo(500);
+            assertEquals(500, response.status().code(), "Response status should be 500 for /io-error");
             String content = response.entity().as(String.class);
-            assertThat(content).contains("IO Error");
+            assertTrue(content.contains("IO Error"), "Content should contain 'IO Error' for /io-error");
         }
     }
 
     @Test
     void testNotFoundHandling() {
         try (Http1ClientResponse response = client.get("/nonexistent").request()) {
-            assertThat(response.status().code()).isEqualTo(404);
+            assertEquals(404, response.status().code(), "Response status should be 404 for /nonexistent");
         }
     }
 
@@ -134,6 +135,6 @@ class ErrorHandlingTest {
             thread.join(5000);
         }
         
-        assertThat(errorCount[0] + successCount[0]).isGreaterThan(0);
+        assertTrue(errorCount[0] + successCount[0] > 0, "At least one request should succeed or error");
     }
 }

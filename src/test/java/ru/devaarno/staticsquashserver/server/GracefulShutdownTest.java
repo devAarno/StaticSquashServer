@@ -26,7 +26,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for Stage 8: Graceful Shutdown.
@@ -42,11 +43,11 @@ class GracefulShutdownTest {
         
         server.start();
         int port = server.port();
-        assertThat(port).isGreaterThan(0);
-        assertThat(server.isRunning()).isTrue();
+        assertTrue(port > 0, "Port should be greater than 0");
+        assertTrue(server.isRunning(), "Server should be running after start");
         
         server.stop();
-        assertThat(server.isRunning()).isFalse();
+        assertFalse(server.isRunning(), "Server should not be running after stop");
     }
 
     @Test
@@ -58,11 +59,11 @@ class GracefulShutdownTest {
         server.start();
         server.stop();
         
-        assertThat(server.isRunning()).isFalse();
+        assertFalse(server.isRunning(), "Server should not be running after first stop");
         
         server.stop();
         
-        assertThat(server.isRunning()).isFalse();
+        assertFalse(server.isRunning(), "Server should not be running after second stop");
     }
 
     @Test
@@ -92,7 +93,7 @@ class GracefulShutdownTest {
         worker.interrupt();
         
         boolean finished = doneLatch.await(2, TimeUnit.SECONDS);
-        assertThat(finished).isTrue();
+        assertTrue(finished, "Latch should count down within timeout");
     }
 
     @Test
@@ -101,12 +102,12 @@ class GracefulShutdownTest {
                 .port(0)
                 .build();
         
-        assertThat(server.isRunning()).isFalse();
+        assertFalse(server.isRunning(), "Server should not be running before start");
         
         server.start();
-        assertThat(server.isRunning()).isTrue();
+        assertTrue(server.isRunning(), "Server should be running after start");
         
         server.stop();
-        assertThat(server.isRunning()).isFalse();
+        assertFalse(server.isRunning(), "Server should not be running after stop");
     }
 }
