@@ -40,7 +40,7 @@ class ArchiveWebServerTest {
     }
 
     @SetUpRoute
-    static void routing(HttpRouting.Builder routing) {
+    static void routing(final HttpRouting.Builder routing) {
         routing.get("/test.txt", (req, res) -> res.send("Hello World"));
         
         routing.get("/nested/file.json", (req, res) -> res.send("{\"key\":\"value\"}"));
@@ -53,7 +53,7 @@ class ArchiveWebServerTest {
 
     @Test
     void testExistingFile() {
-        try (Http1ClientResponse response = client.get("/test.txt").request()) {
+        try (final Http1ClientResponse response = client.get("/test.txt").request()) {
             assertEquals(200, response.status().code(), "Response status should be 200 for /test.txt");
             String entity = response.entity().as(String.class);
             assertEquals("Hello World", entity, "Content should match for /test.txt");
@@ -62,7 +62,7 @@ class ArchiveWebServerTest {
 
     @Test
     void testNestedFile() {
-        try (Http1ClientResponse response = client.get("/nested/file.json").request()) {
+        try (final Http1ClientResponse response = client.get("/nested/file.json").request()) {
             assertEquals(200, response.status().code(), "Response status should be 200 for /nested/file.json");
             String entity = response.entity().as(String.class);
             assertEquals("{\"key\":\"value\"}", entity, "Content should match for /nested/file.json");
@@ -71,7 +71,7 @@ class ArchiveWebServerTest {
 
     @Test
     void testNotFound() {
-        try (Http1ClientResponse response = client.get("/nonexistent.txt").request()) {
+        try (final Http1ClientResponse response = client.get("/nonexistent.txt").request()) {
             assertEquals(404, response.status().code(), "Response status should be 404 for /nonexistent.txt");
             String entity = response.entity().as(String.class);
             assertTrue(entity.contains("Not found"), "Content should contain 'Not found' for /nonexistent.txt");

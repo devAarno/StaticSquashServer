@@ -41,33 +41,33 @@ class ErrorHandlingTest {
 
     private final Http1Client client;
 
-    ErrorHandlingTest(Http1Client client) {
+    ErrorHandlingTest(final Http1Client client) {
         this.client = client;
     }
 
     @SetUpRoute
-    static void routing(HttpRouting.Builder routing) {
-        routing.get("/normal.txt", (req, res) -> res.send("Normal content"));
+    static void routing(final HttpRouting.Builder routing) {
+        routing.get("/normal.txt", (_, res) -> res.send("Normal content"));
         
-        routing.get("/error-simulated", (req, res) -> {
+        routing.get("/error-simulated", (_, _) -> {
             throw new RuntimeException("Simulated error");
         });
         
-        routing.get("/io-error", (req, res) -> {
+        routing.get("/io-error", (_, _) -> {
             throw new IOException("Simulated IO error");
         });
         
-        routing.error(RuntimeException.class, (req, res, ex) -> {
+        routing.error(RuntimeException.class, (_, res, ex) -> {
             res.status(Status.INTERNAL_SERVER_ERROR_500);
             res.send("Error: " + ex.getMessage());
         });
         
-        routing.error(IOException.class, (req, res, ex) -> {
+        routing.error(IOException.class, (_, res, ex) -> {
             res.status(Status.INTERNAL_SERVER_ERROR_500);
             res.send("IO Error: " + ex.getMessage());
         });
         
-        routing.any((req, resp) -> {
+        routing.any((_, resp) -> {
             resp.status(Status.NOT_FOUND_404);
             resp.send("Not found");
         });
@@ -122,7 +122,7 @@ class ErrorHandlingTest {
                             errorCount[0]++;
                         }
                     }
-                } catch (Exception e) {
+                } catch (final Exception _) {
                     // Connection errors are also acceptable in error scenarios
                 }
             });

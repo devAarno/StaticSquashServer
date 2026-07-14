@@ -26,7 +26,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
 import java.util.zip.CRC32;
 
@@ -71,28 +70,28 @@ class ArchiveParserInterfaceTest {
 
     @Test
     void testZipParserFormat() {
-        ArchiveParser parser = ArchiveParserFactory.create(ZIP_ARCHIVE);
+        final var parser = ArchiveParserFactory.create(ZIP_ARCHIVE);
         assertEquals(ArchiveFormat.ZIP, parser.format());
     }
 
     @Test
     void testTarGzParserFormat() {
-        ArchiveParser parser = ArchiveParserFactory.create(TAR_GZ_ARCHIVE);
+        final var parser = ArchiveParserFactory.create(TAR_GZ_ARCHIVE);
         assertEquals(ArchiveFormat.TAR_GZ, parser.format());
     }
 
     @Test
     void testTarXzParserFormat() {
-        ArchiveParser parser = ArchiveParserFactory.create(TAR_XZ_ARCHIVE);
+        final var parser = ArchiveParserFactory.create(TAR_XZ_ARCHIVE);
         assertEquals(ArchiveFormat.TAR_XZ, parser.format());
     }
 
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
     void testInitScanReturnsCorrectFileCount(ArchiveFormat format) {
-        Path archive = getArchivePath(format);
-        ArchiveParser parser = ArchiveParserFactory.create(archive);
-        ArchiveDescriptor descriptor = parser.initScan();
+        final var archive = getArchivePath(format);
+        final var parser = ArchiveParserFactory.create(archive);
+        final var descriptor = parser.initScan();
 
         assertEquals(16, descriptor.entries().size(), 
             "Should have 16 files in " + format + " archive");
@@ -103,11 +102,11 @@ class ArchiveParserInterfaceTest {
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
     void testInitScanContainsAllExpectedFiles(ArchiveFormat format) {
-        Path archive = getArchivePath(format);
-        ArchiveParser parser = ArchiveParserFactory.create(archive);
-        ArchiveDescriptor descriptor = parser.initScan();
+        final var archive = getArchivePath(format);
+        final var parser = ArchiveParserFactory.create(archive);
+        final var descriptor = parser.initScan();
 
-        List<String> entryPaths = descriptor.entries().stream()
+        final var entryPaths = descriptor.entries().stream()
             .map(ArchiveEntryInfo::path)
             .toList();
 
@@ -132,17 +131,17 @@ class ArchiveParserInterfaceTest {
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
     void testInitScanEntrySizes(ArchiveFormat format) {
-        Path archive = getArchivePath(format);
-        ArchiveParser parser = ArchiveParserFactory.create(archive);
-        ArchiveDescriptor descriptor = parser.initScan();
+        final var archive = getArchivePath(format);
+        final var parser = ArchiveParserFactory.create(archive);
+        final var descriptor = parser.initScan();
 
-        ArchiveEntryInfo emptyFile = descriptor.entries().stream()
+        final var emptyFile = descriptor.entries().stream()
             .filter(e -> e.path().equals("empty_file.txt"))
             .findFirst()
             .orElseThrow();
         assertEquals(0, emptyFile.size(), "empty_file.txt should be 0 bytes");
 
-        ArchiveEntryInfo largeFile = descriptor.entries().stream()
+        final var largeFile = descriptor.entries().stream()
             .filter(e -> e.path().equals("data/large_dummy.bin"))
             .findFirst()
             .orElseThrow();
@@ -152,8 +151,8 @@ class ArchiveParserInterfaceTest {
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
     void testFillOutput(ArchiveFormat format) throws Exception {
-        Path archive = getArchivePath(format);
-        ArchiveParser parser = ArchiveParserFactory.create(archive);
+        final var archive = getArchivePath(format);
+        final var parser = ArchiveParserFactory.create(archive);
 
         try (final var byteArrayOutputStream = new ByteArrayOutputStream()) {
             parser.fillOutput("index.html", byteArrayOutputStream);
@@ -166,8 +165,8 @@ class ArchiveParserInterfaceTest {
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
     void testFillOutputDeepNested(ArchiveFormat format) throws Exception {
-        Path archive = getArchivePath(format);
-        ArchiveParser parser = ArchiveParserFactory.create(archive);
+        final var archive = getArchivePath(format);
+        final var parser = ArchiveParserFactory.create(archive);
 
         try (final var byteArrayOutputStream = new ByteArrayOutputStream()) {
             parser.fillOutput("data/nested/deep/level3.json", byteArrayOutputStream);
@@ -182,8 +181,8 @@ class ArchiveParserInterfaceTest {
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
     void testFillOutputFileWithSpaces(ArchiveFormat format) throws Exception {
-        Path archive = getArchivePath(format);
-        ArchiveParser parser = ArchiveParserFactory.create(archive);
+        final var archive = getArchivePath(format);
+        final var parser = ArchiveParserFactory.create(archive);
 
         try (final var byteArrayOutputStream = new ByteArrayOutputStream()) {
             parser.fillOutput("file with spaces.txt", byteArrayOutputStream);
@@ -198,8 +197,8 @@ class ArchiveParserInterfaceTest {
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
     void testFillOutputLargeFile(ArchiveFormat format) throws Exception {
-        Path archive = getArchivePath(format);
-        ArchiveParser parser = ArchiveParserFactory.create(archive);
+        final var archive = getArchivePath(format);
+        final var parser = ArchiveParserFactory.create(archive);
 
         try (final var byteArrayOutputStream = new ByteArrayOutputStream()) {
             parser.fillOutput("data/large_dummy.bin", byteArrayOutputStream);
@@ -215,8 +214,8 @@ class ArchiveParserInterfaceTest {
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
     void testFillOutputNotFound(ArchiveFormat format)  throws Exception {
-        Path archive = getArchivePath(format);
-        ArchiveParser parser = ArchiveParserFactory.create(archive);
+        final var archive = getArchivePath(format);
+        final var parser = ArchiveParserFactory.create(archive);
 
         try (final var byteArrayOutputStream = new ByteArrayOutputStream()) {
             assertThrowsExactly(
@@ -229,41 +228,41 @@ class ArchiveParserInterfaceTest {
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
     void testMediaTypeDetection(ArchiveFormat format) {
-        Path archive = getArchivePath(format);
-        ArchiveParser parser = ArchiveParserFactory.create(archive);
-        ArchiveDescriptor descriptor = parser.initScan();
+        final var archive = getArchivePath(format);
+        final var parser = ArchiveParserFactory.create(archive);
+        final var descriptor = parser.initScan();
 
-        ArchiveEntryInfo htmlEntry = descriptor.entries().stream()
+        final var htmlEntry = descriptor.entries().stream()
             .filter(e -> e.path().equals("index.html"))
             .findFirst()
             .orElseThrow();
         assertEquals(io.helidon.common.media.type.MediaTypes.TEXT_HTML, htmlEntry.mediaType());
 
-        ArchiveEntryInfo cssEntry = descriptor.entries().stream()
+        final var cssEntry = descriptor.entries().stream()
             .filter(e -> e.path().equals("css/style.css"))
             .findFirst()
             .orElseThrow();
         assertEquals(io.helidon.common.media.type.MediaTypes.create("text/css"), cssEntry.mediaType());
 
-        ArchiveEntryInfo jsEntry = descriptor.entries().stream()
+        final var jsEntry = descriptor.entries().stream()
             .filter(e -> e.path().equals("js/app.js"))
             .findFirst()
             .orElseThrow();
         assertEquals("text/javascript", jsEntry.mediaType().text());
 
-        ArchiveEntryInfo jsonEntry = descriptor.entries().stream()
+        final var jsonEntry = descriptor.entries().stream()
             .filter(e -> e.path().equals("data/report.json"))
             .findFirst()
             .orElseThrow();
         assertEquals(io.helidon.common.media.type.MediaTypes.APPLICATION_JSON, jsonEntry.mediaType());
 
-        ArchiveEntryInfo pngEntry = descriptor.entries().stream()
+        final var pngEntry = descriptor.entries().stream()
             .filter(e -> e.path().equals("images/logo.png"))
             .findFirst()
             .orElseThrow();
         assertEquals(io.helidon.common.media.type.MediaTypes.create("image/png"), pngEntry.mediaType());
 
-        ArchiveEntryInfo svgEntry = descriptor.entries().stream()
+        final var svgEntry = descriptor.entries().stream()
             .filter(e -> e.path().equals("images/icons/small.svg"))
             .findFirst()
             .orElseThrow();
@@ -273,11 +272,11 @@ class ArchiveParserInterfaceTest {
     @ParameterizedTest
     @EnumSource(ArchiveFormat.class)
     void testAllureReportEntries(ArchiveFormat format) {
-        Path archive = getArchivePath(format);
-        ArchiveParser parser = ArchiveParserFactory.create(archive);
-        ArchiveDescriptor descriptor = parser.initScan();
+        final var archive = getArchivePath(format);
+        final var parser = ArchiveParserFactory.create(archive);
+        final var descriptor = parser.initScan();
 
-        List<String> entryPaths = descriptor.entries().stream()
+        final var entryPaths = descriptor.entries().stream()
             .map(ArchiveEntryInfo::path)
             .toList();
 
@@ -287,7 +286,7 @@ class ArchiveParserInterfaceTest {
 
     @Test
     void testInvalidArchiveFormatThrowsException() {
-        Path invalidArchive = Path.of("src/test/resources/test_archives/invalid.xyz");
+        final var invalidArchive = Path.of("src/test/resources/test_archives/invalid.xyz");
         assertThrows(IllegalArgumentException.class, () -> 
             ArchiveParserFactory.create(invalidArchive)
         );

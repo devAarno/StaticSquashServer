@@ -46,7 +46,6 @@ class TarXZArchiveWebServerIntegrationTest {
 
     private static ArchiveWebServer server;
     private static Http1Client client;
-    private static int serverPort;
 
     private static final Path TEST_ARCHIVE = assertDoesNotThrow(
             () -> Path.of(Objects.requireNonNull(
@@ -75,10 +74,10 @@ class TarXZArchiveWebServerIntegrationTest {
 
     @BeforeAll
     static void setUp() {
-        var config = CliConfigForTest.create(TEST_ARCHIVE);
+        final var config = CliConfigForTest.create(TEST_ARCHIVE);
         server = new ArchiveWebServer(config);
         server.start();
-        serverPort = server.port();
+        final var serverPort = server.port();
         
         client = Http1Client.builder()
                 .baseUri("http://localhost:" + serverPort)
@@ -95,7 +94,7 @@ class TarXZArchiveWebServerIntegrationTest {
     @ParameterizedTest(name = "Test file: {0}")
     @MethodSource("filesWithCrc32")
     void testFileWithCrc32(String path, String contentType, long expectedCrc32) {
-        try (Http1ClientResponse response = client.get(path).request()) {
+        try (final Http1ClientResponse response = client.get(path).request()) {
             assertEquals(200, response.status().code(), MSG_RESPONSE_STATUS + " 200 for " + path);
             assertEquals(contentType, response.headers().first(CONTENT_TYPE).orElse(""), MSG_CONTENT_TYPE + " " + path);
             assertTrue(response.entity().hasEntity(), MSG_ENTITY_EXISTS + " " + path);
@@ -107,7 +106,7 @@ class TarXZArchiveWebServerIntegrationTest {
 
     @Test
     void testNotFound() {
-        try (Http1ClientResponse response = client.get("/nonexistent.txt").request()) {
+        try (final Http1ClientResponse response = client.get("/nonexistent.txt").request()) {
             assertEquals(404, response.status().code(), "404 status for nonexistent file");
             assertTrue(response.entity().hasEntity(), "Response should have entity for 404");
             assertEquals("Not found", response.entity().as(String.class), "404 response body");
@@ -116,7 +115,7 @@ class TarXZArchiveWebServerIntegrationTest {
 
     @Test
     void testEmptyFile() {
-        try (Http1ClientResponse response = client.get("/empty_file.txt").request()) {
+        try (final Http1ClientResponse response = client.get("/empty_file.txt").request()) {
             assertEquals(200, response.status().code(), MSG_RESPONSE_STATUS + " 200 for empty file");
             assertEquals(MediaTypes.TEXT_PLAIN.text(), response.headers().first(CONTENT_TYPE).orElse(""), MSG_CONTENT_TYPE + " empty file");
             assertEquals("0", response.headers().first(CONTENT_LENGTH).orElse("0"), "Content length should be 0");

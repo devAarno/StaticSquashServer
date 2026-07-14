@@ -22,10 +22,10 @@ package ru.devaarno.staticsquashserver.archive;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -40,9 +40,10 @@ class CorruptedArchiveTest {
     Path tempDir;
 
     @Test
-    void testCorruptedZipArchive() throws IOException {
+    void testCorruptedZipArchive() {
         final var corruptedZip = tempDir.resolve("corrupted.zip");
-        Files.write(corruptedZip, new byte[]{0x50, 0x4B, 0x03, 0x04, (byte) 0xFF, (byte) 0xFF});
+
+        assertDoesNotThrow(() -> Files.write(corruptedZip, new byte[]{0x50, 0x4B, 0x03, 0x04, (byte) 0xFF, (byte) 0xFF}));
         
         final var parser = ArchiveParserFactory.create(corruptedZip);
         
@@ -58,9 +59,10 @@ class CorruptedArchiveTest {
     }
 
     @Test
-    void testEmptyFileAsZip() throws IOException {
+    void testEmptyFileAsZip() {
         final var emptyFile = tempDir.resolve("empty.zip");
-        Files.write(emptyFile, new byte[]{});
+
+        assertDoesNotThrow(() -> Files.write(emptyFile, new byte[]{}));
 
         final var parser = ArchiveParserFactory.create(emptyFile);
 
@@ -72,13 +74,14 @@ class CorruptedArchiveTest {
     }
 
     @Test
-    void testTruncatedZipArchive() throws IOException {
+    void testTruncatedZipArchive() {
         final var truncatedZip = tempDir.resolve("truncated.zip");
         byte[] partialZip = new byte[100];
         for (int i = 0; i < partialZip.length; i++) {
             partialZip[i] = (byte) (i & 0xFF);
         }
-        Files.write(truncatedZip, partialZip);
+
+        assertDoesNotThrow(() -> Files.write(truncatedZip, partialZip));
 
         final var parser = ArchiveParserFactory.create(truncatedZip);
 
@@ -90,9 +93,10 @@ class CorruptedArchiveTest {
     }
 
     @Test
-    void testCorruptedTarGzArchive() throws IOException {
+    void testCorruptedTarGzArchive() {
         final var corruptedTarGz = tempDir.resolve("corrupted.tar.gz");
-        Files.write(corruptedTarGz, new byte[]{(byte) 0x1F, (byte) 0x8B, (byte) 0x08, (byte) 0xFF, (byte) 0xFF});
+
+        assertDoesNotThrow(() -> Files.write(corruptedTarGz, new byte[]{(byte) 0x1F, (byte) 0x8B, (byte) 0x08, (byte) 0xFF, (byte) 0xFF}));
 
         final var parser = ArchiveParserFactory.create(corruptedTarGz);
 
@@ -108,9 +112,10 @@ class CorruptedArchiveTest {
     }
 
     @Test
-    void testCorruptedTarXzArchive() throws IOException {
+    void testCorruptedTarXzArchive() {
         final var corruptedTarXz = tempDir.resolve("corrupted.tar.xz");
-        Files.write(corruptedTarXz, new byte[]{(byte) 0xFD, (byte) 0x37, (byte) 0x7A, (byte) 0x58, (byte) 0x5A, (byte) 0x00, (byte) 0xFF});
+
+        assertDoesNotThrow(() -> Files.write(corruptedTarXz, new byte[]{(byte) 0xFD, (byte) 0x37, (byte) 0x7A, (byte) 0x58, (byte) 0x5A, (byte) 0x00, (byte) 0xFF}));
 
         final var parser = ArchiveParserFactory.create(corruptedTarXz);
 
@@ -139,14 +144,18 @@ class CorruptedArchiveTest {
     }
 
     @Test
-    void testValidZipReturnsEntries() throws IOException {
+    void testValidZipReturnsEntries() {
         final var validZip = tempDir.resolve("valid.zip");
-        
-        try (final var zipOutputStream = new java.util.zip.ZipOutputStream(Files.newOutputStream(validZip))) {
-            zipOutputStream.putNextEntry(new java.util.zip.ZipEntry("test.txt"));
-            zipOutputStream.write("Hello".getBytes());
-            zipOutputStream.closeEntry();
-        }
+
+        assertDoesNotThrow(
+                () -> {
+                    try (final var zipOutputStream = new java.util.zip.ZipOutputStream(Files.newOutputStream(validZip))) {
+                        zipOutputStream.putNextEntry(new java.util.zip.ZipEntry("test.txt"));
+                        zipOutputStream.write("Hello".getBytes());
+                        zipOutputStream.closeEntry();
+                    }
+                }
+        );
         
         final var parser = ArchiveParserFactory.create(validZip);
         final var descriptor = parser.initScan();
@@ -156,15 +165,20 @@ class CorruptedArchiveTest {
     }
 
     @Test
-    void testArchiveWithOnlyDirectories() throws IOException {
+    void testArchiveWithOnlyDirectories() {
         final var zipWithDirs = tempDir.resolve("dirs_only.zip");
-        
-        try (final var zipOutputStream = new java.util.zip.ZipOutputStream(Files.newOutputStream(zipWithDirs))) {
-            zipOutputStream.putNextEntry(new java.util.zip.ZipEntry("dir1/"));
-            zipOutputStream.closeEntry();
-            zipOutputStream.putNextEntry(new java.util.zip.ZipEntry("dir2/"));
-            zipOutputStream.closeEntry();
-        }
+
+        assertDoesNotThrow(
+                () -> {
+                    try (final var zipOutputStream = new java.util.zip.ZipOutputStream(Files.newOutputStream(zipWithDirs))) {
+                        zipOutputStream.putNextEntry(new java.util.zip.ZipEntry("dir1/"));
+                        zipOutputStream.closeEntry();
+                        zipOutputStream.putNextEntry(new java.util.zip.ZipEntry("dir2/"));
+                        zipOutputStream.closeEntry();
+                    }
+                }
+        );
+
         
         final var parser = ArchiveParserFactory.create(zipWithDirs);
         final var descriptor = parser.initScan();
