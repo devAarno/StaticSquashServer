@@ -25,19 +25,18 @@ import java.nio.file.Path;
 
 final class CliConfigForTest {
     
-    static CliConfig create(Path archivePath) {
+    static CliConfig create(final Path archivePath) {
         try {
-            CliConfig config = CliConfig.parse(new String[]{"-a", archivePath.toString()});
-            return config;
+            return CliConfig.parse(new String[] {"-a", archivePath.toString()});
         } catch (Exception e) {
             throw new RuntimeException("Failed to create CliConfig", e);
         }
     }
-    
-    CliConfigForTest(int port, String archivePath) {
+
+    CliConfigForTest(final int port, final String archivePath) {
         try {
             this.config = CliConfig.parse(new String[]{"-p", String.valueOf(port), "-a", archivePath});
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Failed to create CliConfig", e);
         }
     }

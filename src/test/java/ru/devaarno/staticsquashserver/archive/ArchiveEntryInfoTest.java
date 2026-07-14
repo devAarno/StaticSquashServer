@@ -32,8 +32,8 @@ class ArchiveEntryInfoTest {
 
     @Test
     void testConstructorAndGetters() {
-        Instant now = Instant.now();
-        ArchiveEntryInfo info = new ArchiveEntryInfo("report/index.html", 12345, MediaTypes.TEXT_HTML, now);
+        final var now = Instant.now();
+        final var info = new ArchiveEntryInfo("report/index.html", 12345, MediaTypes.TEXT_HTML, now);
 
         assertEquals("report/index.html", info.path(), "Path should match");
         assertEquals(12345, info.size(), "Size should match");
@@ -43,7 +43,7 @@ class ArchiveEntryInfoTest {
 
     @Test
     void testImmutability() {
-        ArchiveEntryInfo info = new ArchiveEntryInfo("test.txt", 100, MediaTypes.TEXT_PLAIN, Instant.EPOCH);
+        final var info = new ArchiveEntryInfo("test.txt", 100, MediaTypes.TEXT_PLAIN, Instant.EPOCH);
 
         assertNotNull(info.path(), "Path should not be null");
         assertTrue(info.size() > 0, "Size should be greater than 0");

@@ -35,11 +35,11 @@ class ArchiveDescriptorTest {
 
     @Test
     void testConstructorAndGetters(@TempDir Path tempDir) {
-        Path archivePath = tempDir.resolve("test.zip");
-        ArchiveEntryInfo entry = new ArchiveEntryInfo("file.txt", 100, MediaTypes.TEXT_PLAIN, Instant.EPOCH);
-        List<ArchiveEntryInfo> entries = List.of(entry);
+        final var archivePath = tempDir.resolve("test.zip");
+        final var entry = new ArchiveEntryInfo("file.txt", 100, MediaTypes.TEXT_PLAIN, Instant.EPOCH);
+        final var entries = List.of(entry);
 
-        ArchiveDescriptor descriptor = new ArchiveDescriptor(archivePath, ArchiveFormat.ZIP, entries);
+        final var descriptor = new ArchiveDescriptor(archivePath, ArchiveFormat.ZIP, entries);
 
         assertEquals(archivePath, descriptor.archivePath(), "Archive path should match");
         assertEquals(ArchiveFormat.ZIP, descriptor.format(), "Format should be ZIP");
@@ -49,8 +49,8 @@ class ArchiveDescriptorTest {
 
     @Test
     void testEmptyEntries(@TempDir Path tempDir) {
-        Path archivePath = tempDir.resolve("empty.tar.gz");
-        ArchiveDescriptor descriptor = new ArchiveDescriptor(archivePath, ArchiveFormat.TAR_GZ, List.of());
+        final var archivePath = tempDir.resolve("empty.tar.gz");
+        final var descriptor = new ArchiveDescriptor(archivePath, ArchiveFormat.TAR_GZ, List.of());
 
         assertTrue(descriptor.entries().isEmpty(), "Entries should be empty");
     }
