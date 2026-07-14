@@ -47,7 +47,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @ParameterizedClass
 @ValueSource(strings = {"tar.gz", "tar.xz", "zip"})
 // @TestInstance(PER_CLASS) does not alloed here due to compilation errors
-class TarXZArchiveWebServerIntegrationTest {
+class ArchiveWebServerIntegrationTest {
 
     private static final long INDEX_HTML_CRC32 = 3005742938L;
     private static final long REPORT_JSON_CRC32 = 2840432823L;
@@ -73,13 +73,13 @@ class TarXZArchiveWebServerIntegrationTest {
 
     private static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
 
-    TarXZArchiveWebServerIntegrationTest(final String extension) {
+    ArchiveWebServerIntegrationTest(final String extension) {
         if (INITIALIZED.compareAndSet(false, true)) {
             server = new ArchiveWebServer(
                     CliConfigBuilder.build(
                             assertDoesNotThrow(
                                     () -> Path.of(Objects.requireNonNull(
-                                            TarXZArchiveWebServerIntegrationTest.class.getResource("/test_archives/test." + extension)
+                                            ArchiveWebServerIntegrationTest.class.getResource("/test_archives/test." + extension)
                                     ).toURI()),
                                     URI_SHOULD_BE_RESOLVED
                             )
