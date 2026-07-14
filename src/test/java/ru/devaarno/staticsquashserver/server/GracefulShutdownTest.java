@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class GracefulShutdownTest {
 
     @Test
-    void testServerStartAndStop() throws Exception {
+    void testServerStartAndStop() {
         WebServer server = WebServer.builder()
                 .port(0)
                 .build();
@@ -51,7 +51,7 @@ class GracefulShutdownTest {
     }
 
     @Test
-    void testMultipleStopCalls() throws Exception {
+    void testMultipleStopCalls() {
         WebServer server = WebServer.builder()
                 .port(0)
                 .build();
@@ -72,7 +72,7 @@ class GracefulShutdownTest {
         CountDownLatch doneLatch = new CountDownLatch(1);
         CountDownLatch workStartedLatch = new CountDownLatch(1);
         AtomicBoolean completed = new AtomicBoolean(false);
-        
+
         Thread worker = new Thread(() -> {
             try {
                 startLatch.await(5, TimeUnit.SECONDS);
@@ -85,7 +85,7 @@ class GracefulShutdownTest {
                 doneLatch.countDown();
             }
         });
-        
+
         worker.start();
         startLatch.countDown();
         
@@ -97,7 +97,7 @@ class GracefulShutdownTest {
     }
 
     @Test
-    void testServerLifecycle() throws Exception {
+    void testServerLifecycle() {
         WebServer server = WebServer.builder()
                 .port(0)
                 .build();

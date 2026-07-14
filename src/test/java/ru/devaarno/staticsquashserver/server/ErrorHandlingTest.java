@@ -47,9 +47,7 @@ class ErrorHandlingTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder routing) {
-        routing.get("/normal.txt", (req, res) -> {
-            res.send("Normal content");
-        });
+        routing.get("/normal.txt", (req, res) -> res.send("Normal content"));
         
         routing.get("/error-simulated", (req, res) -> {
             throw new RuntimeException("Simulated error");
