@@ -17,33 +17,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.devaarno.staticsquashserver.server;
+package ru.devaarno.staticsquashserver.server.shared;
 
 import ru.devaarno.staticsquashserver.cli.CliConfig;
 
 import java.nio.file.Path;
 
-final class CliConfigForTest {
-    
-    static CliConfig create(final Path archivePath) {
+public final class CliConfigBuilder {
+    static public CliConfig build(final Path archivePath) {
         try {
             return CliConfig.parse(new String[] {"-a", archivePath.toString()});
         } catch (Exception e) {
             throw new RuntimeException("Failed to create CliConfig", e);
         }
-    }
-
-    CliConfigForTest(final int port, final String archivePath) {
-        try {
-            this.config = CliConfig.parse(new String[]{"-p", String.valueOf(port), "-a", archivePath});
-        } catch (final Exception e) {
-            throw new RuntimeException("Failed to create CliConfig", e);
-        }
-    }
-    
-    private final CliConfig config;
-    
-    CliConfig getConfig() {
-        return config;
     }
 }
