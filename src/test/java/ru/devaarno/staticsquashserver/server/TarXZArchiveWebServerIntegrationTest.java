@@ -21,16 +21,18 @@ package ru.devaarno.staticsquashserver.server;
 
 import io.helidon.common.media.type.MediaTypes;
 import io.helidon.webclient.http1.Http1Client;
-import io.helidon.webclient.http1.Http1ClientResponse;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.AfterParameterizedClassInvocation;
+import org.junit.jupiter.params.ParameterizedClass;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import ru.devaarno.staticsquashserver.server.shared.CliConfigBuilder;
 
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
@@ -42,17 +44,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
+@ParameterizedClass
+@ValueSource(strings = {"tar.gz", "tar.xz", "zip"})
+// @TestInstance(PER_CLASS) does not alloed here due to compilation errors
 class TarXZArchiveWebServerIntegrationTest {
-
-    private static ArchiveWebServer server;
-    private static Http1Client client;
-
-    private static final Path TEST_ARCHIVE = assertDoesNotThrow(
-            () -> Path.of(Objects.requireNonNull(
-                    TarXZArchiveWebServerIntegrationTest.class.getResource("/test_archives/test.zip")
-            ).toURI()),
-            "Test archive URI should be resolved"
-    );
 
     private static final long INDEX_HTML_CRC32 = 3005742938L;
     private static final long REPORT_JSON_CRC32 = 2840432823L;
@@ -71,30 +66,50 @@ class TarXZArchiveWebServerIntegrationTest {
     private static final String MSG_CONTENT_TYPE = "Content type should be";
     private static final String MSG_ENTITY_EXISTS = "Response should have entity";
     private static final String MSG_CRC32_MISMATCH = "CRC32 mismatch for %s";
+    private static final String URI_SHOULD_BE_RESOLVED = "Test archive URI should be resolved";
 
-    @BeforeAll
-    static void setUp() {
-        final var config = CliConfigForTest.create(TEST_ARCHIVE);
-        server = new ArchiveWebServer(config);
-        server.start();
-        final var serverPort = server.port();
-        
-        client = Http1Client.builder()
-                .baseUri("http://localhost:" + serverPort)
-                .build();
+    private static ArchiveWebServer server;
+    private static Http1Client client;
+
+    private static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
+
+    TarXZArchiveWebServerIntegrationTest(final String extension) {
+        if (INITIALIZED.compareAndSet(false, true)) {
+            server = new ArchiveWebServer(
+                    CliConfigBuilder.build(
+                            assertDoesNotThrow(
+                                    () -> Path.of(Objects.requireNonNull(
+                                            TarXZArchiveWebServerIntegrationTest.class.getResource("/test_archives/test." + extension)
+                                    ).toURI()),
+                                    URI_SHOULD_BE_RESOLVED
+                            )
+                    )
+            );
+            server.start();
+
+            client = Http1Client.builder()
+                    .baseUri("http://localhost:" + server.port())
+                    .build();
+        }
     }
 
-    @AfterAll
-    static void tearDown() {
-        if (server != null) {
+    @AfterParameterizedClassInvocation
+    static void resetFlag() {
+        INITIALIZED.set(false);
+        if (null != server) {
             server.stop();
         }
+        server = null;
+    }
+
+    private Http1Client getClient() {
+        return client;
     }
 
     @ParameterizedTest(name = "Test file: {0}")
     @MethodSource("filesWithCrc32")
-    void testFileWithCrc32(String path, String contentType, long expectedCrc32) {
-        try (final Http1ClientResponse response = client.get(path).request()) {
+    void testFileWithCrc32(final String path, final String contentType, final long expectedCrc32) {
+        try (final var response = getClient().get(path).request()) {
             assertEquals(200, response.status().code(), MSG_RESPONSE_STATUS + " 200 for " + path);
             assertEquals(contentType, response.headers().first(CONTENT_TYPE).orElse(""), MSG_CONTENT_TYPE + " " + path);
             assertTrue(response.entity().hasEntity(), MSG_ENTITY_EXISTS + " " + path);
@@ -106,7 +121,7 @@ class TarXZArchiveWebServerIntegrationTest {
 
     @Test
     void testNotFound() {
-        try (final Http1ClientResponse response = client.get("/nonexistent.txt").request()) {
+        try (final var response = getClient().get("/nonexistent.txt").request()) {
             assertEquals(404, response.status().code(), "404 status for nonexistent file");
             assertTrue(response.entity().hasEntity(), "Response should have entity for 404");
             assertEquals("Not found", response.entity().as(String.class), "404 response body");
@@ -115,7 +130,7 @@ class TarXZArchiveWebServerIntegrationTest {
 
     @Test
     void testEmptyFile() {
-        try (final Http1ClientResponse response = client.get("/empty_file.txt").request()) {
+        try (final var response = getClient().get("/empty_file.txt").request()) {
             assertEquals(200, response.status().code(), MSG_RESPONSE_STATUS + " 200 for empty file");
             assertEquals(MediaTypes.TEXT_PLAIN.text(), response.headers().first(CONTENT_TYPE).orElse(""), MSG_CONTENT_TYPE + " empty file");
             assertEquals("0", response.headers().first(CONTENT_LENGTH).orElse("0"), "Content length should be 0");
