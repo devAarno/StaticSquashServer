@@ -41,111 +41,137 @@ class CorruptedArchiveTest {
 
     @Test
     void testCorruptedZipArchive() throws IOException {
-        Path corruptedZip = tempDir.resolve("corrupted.zip");
+        final var corruptedZip = tempDir.resolve("corrupted.zip");
         Files.write(corruptedZip, new byte[]{0x50, 0x4B, 0x03, 0x04, (byte) 0xFF, (byte) 0xFF});
         
-        ArchiveParser parser = ArchiveParserFactory.create(corruptedZip);
+        final var parser = ArchiveParserFactory.create(corruptedZip);
         
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> parser.initScan(),
-                "Should throw RuntimeException for corrupted ZIP");
-        assertTrue(exception.getMessage().contains("Failed to parse"),
-                "Exception message should contain 'Failed to parse' for corrupted ZIP");
+        final var exception = assertThrows(
+                RuntimeException.class,
+                parser::initScan,
+                "Should throw RuntimeException for corrupted ZIP"
+        );
+        assertTrue(
+                exception.getMessage().contains("Failed to parse"),
+                "Exception message should contain 'Failed to parse' for corrupted ZIP"
+        );
     }
 
     @Test
     void testEmptyFileAsZip() throws IOException {
-        Path emptyFile = tempDir.resolve("empty.zip");
+        final var emptyFile = tempDir.resolve("empty.zip");
         Files.write(emptyFile, new byte[]{});
-        
-        ArchiveParser parser = ArchiveParserFactory.create(emptyFile);
-        
-        assertThrows(RuntimeException.class, () -> parser.initScan(),
-                "Should throw RuntimeException for empty file as ZIP");
+
+        final var parser = ArchiveParserFactory.create(emptyFile);
+
+        assertThrows(
+                RuntimeException.class,
+                parser::initScan,
+                "Should throw RuntimeException for empty file as ZIP"
+        );
     }
 
     @Test
     void testTruncatedZipArchive() throws IOException {
-        Path truncatedZip = tempDir.resolve("truncated.zip");
+        final var truncatedZip = tempDir.resolve("truncated.zip");
         byte[] partialZip = new byte[100];
         for (int i = 0; i < partialZip.length; i++) {
             partialZip[i] = (byte) (i & 0xFF);
         }
         Files.write(truncatedZip, partialZip);
-        
-        ArchiveParser parser = ArchiveParserFactory.create(truncatedZip);
-        
-        assertThrows(RuntimeException.class, () -> parser.initScan(),
-                "Should throw RuntimeException for truncated ZIP");
+
+        final var parser = ArchiveParserFactory.create(truncatedZip);
+
+        assertThrows(
+                RuntimeException.class,
+                parser::initScan,
+                "Should throw RuntimeException for truncated ZIP"
+        );
     }
 
     @Test
     void testCorruptedTarGzArchive() throws IOException {
-        Path corruptedTarGz = tempDir.resolve("corrupted.tar.gz");
+        final var corruptedTarGz = tempDir.resolve("corrupted.tar.gz");
         Files.write(corruptedTarGz, new byte[]{(byte) 0x1F, (byte) 0x8B, (byte) 0x08, (byte) 0xFF, (byte) 0xFF});
-        
-        ArchiveParser parser = ArchiveParserFactory.create(corruptedTarGz);
-        
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> parser.initScan(),
-                "Should throw RuntimeException for corrupted TAR.GZ");
-        assertTrue(exception.getMessage().contains("Failed to parse"),
-                "Exception message should contain 'Failed to parse' for corrupted TAR.GZ");
+
+        final var parser = ArchiveParserFactory.create(corruptedTarGz);
+
+        final var exception = assertThrows(
+                RuntimeException.class,
+                parser::initScan,
+                "Should throw RuntimeException for corrupted TAR.GZ"
+        );
+        assertTrue(
+                exception.getMessage().contains("Failed to parse"),
+                "Exception message should contain 'Failed to parse' for corrupted TAR.GZ"
+        );
     }
 
     @Test
     void testCorruptedTarXzArchive() throws IOException {
-        Path corruptedTarXz = tempDir.resolve("corrupted.tar.xz");
+        final var corruptedTarXz = tempDir.resolve("corrupted.tar.xz");
         Files.write(corruptedTarXz, new byte[]{(byte) 0xFD, (byte) 0x37, (byte) 0x7A, (byte) 0x58, (byte) 0x5A, (byte) 0x00, (byte) 0xFF});
-        
-        ArchiveParser parser = ArchiveParserFactory.create(corruptedTarXz);
-        
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> parser.initScan(),
-                "Should throw RuntimeException for corrupted TAR.XZ");
-        assertTrue(exception.getMessage().contains("Failed to parse"),
-                "Exception message should contain 'Failed to parse' for corrupted TAR.XZ");
+
+        final var parser = ArchiveParserFactory.create(corruptedTarXz);
+
+        final var exception = assertThrows(
+                RuntimeException.class,
+                parser::initScan,
+                "Should throw RuntimeException for corrupted TAR.XZ"
+        );
+        assertTrue(
+                exception.getMessage().contains("Failed to parse"),
+                "Exception message should contain 'Failed to parse' for corrupted TAR.XZ"
+        );
     }
 
     @Test
     void testNonExistentArchive() {
-        Path nonExistent = tempDir.resolve("nonexistent.zip");
-        
-        ArchiveParser parser = ArchiveParserFactory.create(nonExistent);
-        
-        assertThrows(RuntimeException.class, () -> parser.initScan(),
-                "Should throw RuntimeException for non-existent archive");
+        final var nonExistent = tempDir.resolve("nonexistent.zip");
+
+        final var parser = ArchiveParserFactory.create(nonExistent);
+
+        assertThrows(
+                RuntimeException.class,
+                parser::initScan,
+                "Should throw RuntimeException for non-existent archive"
+        );
     }
 
     @Test
     void testValidZipReturnsEntries() throws IOException {
-        Path validZip = tempDir.resolve("valid.zip");
+        final var validZip = tempDir.resolve("valid.zip");
         
-        try (var zipOutputStream = new java.util.zip.ZipOutputStream(Files.newOutputStream(validZip))) {
+        try (final var zipOutputStream = new java.util.zip.ZipOutputStream(Files.newOutputStream(validZip))) {
             zipOutputStream.putNextEntry(new java.util.zip.ZipEntry("test.txt"));
             zipOutputStream.write("Hello".getBytes());
             zipOutputStream.closeEntry();
         }
         
-        ArchiveParser parser = ArchiveParserFactory.create(validZip);
-        ArchiveDescriptor descriptor = parser.initScan();
+        final var parser = ArchiveParserFactory.create(validZip);
+        final var descriptor = parser.initScan();
         
         assertEquals(1, descriptor.entries().size(), "Should have exactly 1 entry in valid ZIP");
-        assertEquals("test.txt", descriptor.entries().get(0).path(), "Entry path should be 'test.txt'");
+        assertEquals("test.txt", descriptor.entries().getFirst().path(), "Entry final var should be 'test.txt'");
     }
 
     @Test
     void testArchiveWithOnlyDirectories() throws IOException {
-        Path zipWithDirs = tempDir.resolve("dirs_only.zip");
+        final var zipWithDirs = tempDir.resolve("dirs_only.zip");
         
-        try (var zipOutputStream = new java.util.zip.ZipOutputStream(Files.newOutputStream(zipWithDirs))) {
+        try (final var zipOutputStream = new java.util.zip.ZipOutputStream(Files.newOutputStream(zipWithDirs))) {
             zipOutputStream.putNextEntry(new java.util.zip.ZipEntry("dir1/"));
             zipOutputStream.closeEntry();
             zipOutputStream.putNextEntry(new java.util.zip.ZipEntry("dir2/"));
             zipOutputStream.closeEntry();
         }
         
-        ArchiveParser parser = ArchiveParserFactory.create(zipWithDirs);
-        ArchiveDescriptor descriptor = parser.initScan();
+        final var parser = ArchiveParserFactory.create(zipWithDirs);
+        final var descriptor = parser.initScan();
         
-        assertTrue(descriptor.entries().isEmpty(),
-                "Should have no file entries when archive contains only directories");
+        assertTrue(
+                descriptor.entries().isEmpty(),
+                "Should have no file entries when archive contains only directories"
+        );
     }
 }

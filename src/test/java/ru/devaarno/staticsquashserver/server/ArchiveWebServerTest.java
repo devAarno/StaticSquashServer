@@ -41,13 +41,9 @@ class ArchiveWebServerTest {
 
     @SetUpRoute
     static void routing(HttpRouting.Builder routing) {
-        routing.get("/test.txt", (req, res) -> {
-            res.send("Hello World");
-        });
+        routing.get("/test.txt", (req, res) -> res.send("Hello World"));
         
-        routing.get("/nested/file.json", (req, res) -> {
-            res.send("{\"key\":\"value\"}");
-        });
+        routing.get("/nested/file.json", (req, res) -> res.send("{\"key\":\"value\"}"));
         
         routing.any((req, resp) -> {
             resp.status(Status.NOT_FOUND_404);
