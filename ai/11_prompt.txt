@@ -1,0 +1,5 @@
+# Copyright (C) 2026 Parkhomenko Stanislav
+# This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+# To view a copy of this license, visit http://creativecommons.org
+
+Выполни параметризацию тестов с помощью Junit 6 для @src/test/java/ru/devaarno/staticsquashserver/server/ArchiveWebServerIntegrationTest.java . Для всех методов assert*() добавь лаконичный и понятный message на английском языке (часто повторяемые сообщения вынеси в константу). use context7

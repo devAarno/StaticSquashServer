@@ -1,0 +1,5 @@
+# Copyright (C) 2026 Parkhomenko Stanislav
+# This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+# To view a copy of this license, visit http://creativecommons.org
+
+Выполни ревью @src/main/java/ru/devaarno/staticsquashserver/contentprovider/ContentProvider.java . Сосредоточься на вопросах асинхронного и параллельного программирования. Основная сложность управления потоками заключается в том, что быстрые виртуальные потоки делегируют задачи в последовательный цикл сканирования архива через очередь. Цикл сканирования выполняется в отдельном физическом потоке, однако не допустимо иметь больше одного такого. Если такой поток уже запущен, то новый запускать запрещено, т.е. `tryStartScan()` условно пропускается. Составь список замечаний. force use context7, mcp, skills

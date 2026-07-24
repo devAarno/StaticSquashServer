@@ -1,0 +1,5 @@
+# Copyright (C) 2026 Parkhomenko Stanislav
+# This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+# To view a copy of this license, visit http://creativecommons.org
+
+В тестовом классе @src/test/java/ru/devaarno/staticsquashserver/server/ArchiveWebServerIntegrationTest.java замечено создание тестовых архивов, однако, согласно @ai/test_archive_design.md , @ai/00_task.txt и @ai/arch_plan.md в каталоге @src/test/resources/test_archives/ расположены уже готовые архивы для тестирования. Перепиши тесты на использование уже созданных архивов. use context7

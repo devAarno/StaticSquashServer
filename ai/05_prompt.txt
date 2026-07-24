@@ -1,0 +1,7 @@
+# Copyright (C) 2026 Parkhomenko Stanislav
+# This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+# To view a copy of this license, visit http://creativecommons.org
+
+SonarQube рекомендует для всех методов группы assert* указывать параметр message. Проанализируй тест @src/test/java/ru/devaarno/staticsquashserver/archive/ArchiveParserTest.java и добавь везде корректные, актуальные, понятные и короткие сообщения (параметр message). use context7
+
+Вижу отсутствие сообщений в assertDoesNotThrow на строке 22 и assertFalse на строке 60. Добавь сообщения в них. use context7

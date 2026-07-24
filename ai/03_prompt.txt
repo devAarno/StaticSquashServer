@@ -1,0 +1,5 @@
+# Copyright (C) 2026 Parkhomenko Stanislav
+# This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+# To view a copy of this license, visit http://creativecommons.org
+
+Перенеси @test_data в папку с Java ресурсами и актуализируй тесты. Критерий успешности: сборка проекта проходит успешно, тесты зелёные. use context7

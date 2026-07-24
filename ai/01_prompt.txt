@@ -1,0 +1,5 @@
+# Copyright (C) 2026 Parkhomenko Stanislav
+# This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+# To view a copy of this license, visit http://creativecommons.org
+
+Ты в режиме разработки OpenCode. Разработай, включая тесты, этап 1 проекта @ai/00_task.txt согласно плану @ai/arch_plan.md . Выполни проверку плана, убедись, что он согласуется с текущей кодовой базой. Критерий успешности: сборка проекта проходит успешно, тесты зелёные. use context7

@@ -1,0 +1,7 @@
+# Copyright (C) 2026 Parkhomenko Stanislav
+# This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+# To view a copy of this license, visit http://creativecommons.org
+
+Выполни ревью файла @src/main/java/ru/devaarno/staticsquashserver/server/ArchiveWebServer.java . Там есть `Thread.sleep(1000)`, от которого надо либо избавиться, либо заменить (возможно на что-то асинхронное). В проекте используются самый свежий Helidon 4.4.1. Предварительно ознакомься с его исходным кодом по каталогу /home/user/IdeaProjects/helidon-4.4.1. Критерий успешности выполнения этапа: сборка проекта проходит успешно, тесты зелёные. force use context7 and skills
+
+Ещё `Thread.sleep(...)` встречается в тестах: @src/test/java/ru/devaarno/staticsquashserver/server/GracefulShutdownTest.java , @src/test/java/ru/devaarno/staticsquashserver/server/RequestQueueStressTest.java  и @src/test/java/ru/devaarno/staticsquashserver/server/RequestQueueTest.java . Их тоже необходимо исправить. force use context7 and skills

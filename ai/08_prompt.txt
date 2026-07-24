@@ -1,0 +1,7 @@
+# Copyright (C) 2026 Parkhomenko Stanislav
+# This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License.
+# To view a copy of this license, visit http://creativecommons.org
+
+Ты в режиме разработки OpenCode. Разработай этап 4 проекта @ai/00_task.txt согласно плану @ai/arch_plan.md , включая тесты. Выполни предварительную проверку плана, убедись, что он согласуется с текущей кодовой базой. В проекте используются самый свежий Helidon 4.4.1. Предварительно ознакомься с его исходным кодом по каталогу /home/user/IdeaProjects/helidon-4.4.1. Критерий успешности выполнения этапа: сборка проекта проходит успешно, тесты зелёные.  use context7
+
+Ты в режиме разработки OpenCode. Разработай этап 5 проекта @ai/00_task.txt согласно плану @ai/arch_plan.md , включая тесты. Выполни предварительную проверку плана, убедись, что он согласуется с текущей кодовой базой. В проекте используются самый свежий Helidon 4.4.1. Предварительно ознакомься с его исходным кодом по каталогу /home/user/IdeaProjects/helidon-4.4.1. Критерий успешности выполнения этапа: сборка проекта проходит успешно, тесты зелёные.  use context7
