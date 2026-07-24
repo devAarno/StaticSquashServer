@@ -11,7 +11,7 @@
     <parent>
         <groupId>io.helidon.applications</groupId>
         <artifactId>helidon-se</artifactId>
-        <version>4.5.0</version>
+        <version>4.5.1</version>
         <relativePath/>
     </parent>
 
@@ -30,11 +30,11 @@
         <xz.version>1.12</xz.version>
         <jcommander.version>3.0</jcommander.version>
         <shade.version>3.6.2</shade.version>
-        <native-maven-plugin.version>1.1.4</native-maven-plugin.version>
+        <native-maven-plugin.version>1.1.6</native-maven-plugin.version>
         <versions.version>2.21.0</versions.version>
 
         <junit.version>6.1.2</junit.version>
-        <allure.version>2.35.3</allure.version>
+        <allure.version>2.35.4</allure.version>
         <slf4j-nop.version>2.0.17</slf4j-nop.version>
 
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
@@ -42,7 +42,7 @@
         <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
         <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
         <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
-        <allure-maven-plugin.version>3.0.2</allure-maven-plugin.version>
+        <allure-maven-plugin.version>3.0.3</allure-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <sonar-maven-plugin.version>5.7.0.6970</sonar-maven-plugin.version>
     </properties>
