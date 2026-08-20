@@ -22,10 +22,23 @@ package ru.devaarno.staticsquashserver.archive;
 import io.helidon.common.media.type.MediaType;
 
 import java.time.Instant;
+import java.util.Objects;
 
 public record ArchiveEntryInfo(
         String path,
         long size,
         MediaType mediaType,
         Instant modificationTime
-) { }
+) {
+
+    public ArchiveEntryInfo {
+        Objects.requireNonNull(path, "path must not be null");
+    }
+
+    /**
+     * Canonical browser-requestable URL path derived from the raw archive {@link #path()}.
+     */
+    public String urlPath() {
+        return ArchiveParser.canonicalizeUrlPath(path);
+    }
+}

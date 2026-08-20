@@ -65,7 +65,7 @@ public final class ArchiveWebServer {
 
     private void setupRouting(final HttpRouting.Builder routing) {
         for (final ArchiveEntryInfo entry : this.contentProvider.getEntries()) {
-            String path = "/" + normalizePath(entry.path());
+            String path = "/" + entry.urlPath();
             routing.get(path, createHandler(entry));
         }
         
@@ -94,10 +94,6 @@ public final class ArchiveWebServer {
             }*/
 
         };
-    }
-
-    private String normalizePath(final String path) {
-        return path.replace('\\', '/');
     }
 
     public void start() {

@@ -25,6 +25,7 @@ import ru.devaarno.staticsquashserver.mime.MimeTypeResolver;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.function.BiConsumer;
 
 public interface ArchiveParser {
@@ -38,6 +39,21 @@ public interface ArchiveParser {
 
     static MediaType detectMediaType(final String entryName) {
         return MimeTypeResolver.resolve(entryName);
+    }
+
+    /**
+     * Produces a browser-requestable URL path (RFC 3986 dot-segment removal) from a raw
+     * archive entry name. Handles Windows {@code \} separators, leading {@code /} and
+     * {@code ./} prefixes, duplicate slashes and {@code ..} segments without escaping the
+     * archive root.
+     */
+    static String canonicalizeUrlPath(final String entryName) {
+        String p = entryName.replace('\\', '/');
+        while (p.startsWith("/")) {
+            p = p.substring(1);
+        }
+        final String normalized = Path.of(p).normalize().toString().replace('\\', '/');
+        return normalized.equals(".") ? "" : normalized;
     }
 
     void forEachEntry(final BiConsumer<String, InputStream> action) throws IOException;
