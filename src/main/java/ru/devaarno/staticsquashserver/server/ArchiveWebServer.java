@@ -30,7 +30,6 @@ import ru.devaarno.staticsquashserver.cli.CliConfig;
 import ru.devaarno.staticsquashserver.contentprovider.ContentProvider;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -41,12 +40,11 @@ public final class ArchiveWebServer {
     private static final Logger LOGGER = Logger.getLogger(ArchiveWebServer.class.getName());
 
     private final WebServer server;
-    private final Path archivePath;
     private final CountDownLatch shutdownLatch = new CountDownLatch(1);
     private final ContentProvider contentProvider;
 
     public ArchiveWebServer(final CliConfig config) {
-        this.archivePath = config.getArchivePath();
+        final var archivePath = config.getArchivePath();
         
         if (!Files.exists(archivePath)) {
             throw new IllegalArgumentException("Archive file not found: " + archivePath);
@@ -54,7 +52,7 @@ public final class ArchiveWebServer {
 
         LOGGER.log(Level.INFO, "Parsing archive: {0}", archivePath);
 
-        this.contentProvider = new ContentProvider(this.archivePath);
+        this.contentProvider = new ContentProvider(archivePath);
         
         this.server = WebServer
                 .builder()
@@ -65,8 +63,9 @@ public final class ArchiveWebServer {
 
     private void setupRouting(final HttpRouting.Builder routing) {
         for (final ArchiveEntryInfo entry : this.contentProvider.getEntries()) {
-            String path = "/" + normalizePath(entry.path());
+            final var path = "/" + entry.urlPath();
             routing.get(path, createHandler(entry));
+            LOGGER.log(Level.FINER, "Register: {0}", path);
         }
         
         routing.any((final ServerRequest _, final ServerResponse resp) -> {
@@ -94,10 +93,6 @@ public final class ArchiveWebServer {
             }*/
 
         };
-    }
-
-    private String normalizePath(final String path) {
-        return path.replace('\\', '/');
     }
 
     public void start() {
